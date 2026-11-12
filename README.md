@@ -22,3 +22,15 @@ npm run build    # versión estática en dist/ (publicable en GitHub Pages, Verc
   vistas Aprender y Laboratorio).
 - `src/contenido/` — textos teóricos.
 - `tests/` — pruebas Vitest (ejemplo de Taha y propiedades en 200 instancias aleatorias).
+
+## Dependencias de terceros y licencias
+
+| Componente | Uso | Licencia |
+|---|---|---|
+| React, React DOM | Interfaz | MIT |
+| Unbounded (vía @fontsource) | Tipografía de títulos | SIL Open Font License 1.1 |
+| Manrope (vía @fontsource) | Tipografía de texto | SIL Open Font License 1.1 |
+| Vite, Vitest, TypeScript (solo desarrollo) | Construcción y pruebas | MIT / Apache-2.0 |
+
+Las fuentes se distribuyen dentro de la aplicación (no se cargan desde internet). Todos los gráficos (logotipo,
+red de transporte de la portada, íconos) son originales y están dibujados con código.

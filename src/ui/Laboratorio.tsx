@@ -19,6 +19,7 @@ import type { MetodoInicial } from '../core/metodos';
 import type { Problema } from '../core/tipos';
 import { fmt } from '../core/util';
 import { Reproductor } from './Reproductor';
+import type { Fase } from './Reproductor';
 
 const CLAVE_GUARDADO = 'heuristrans.heuristica';
 
@@ -67,11 +68,15 @@ export function Laboratorio({ problema }: { problema: Problema }) {
   const equivale = equivalencia(config);
   const nombre = config.nombre.trim() || 'Mi heurística';
 
-  const { balanceado, pasos } = useMemo(() => {
+  const { balanceado, pasos, fases } = useMemo(() => {
     const inicial = resolverInicial(problema, selectorPersonalizado(config), nombre);
     const pasos = [...inicial.pasos];
-    if (optimizarOn) pasos.push(...optimizar(inicial.problema, inicial.solucion).pasos);
-    return { balanceado: inicial.problema, pasos };
+    const fases: Fase[] = [{ desde: 0, etiqueta: `Construcción · ${nombre}`, tipo: 'construccion' }];
+    if (optimizarOn) {
+      fases.push({ desde: pasos.length, etiqueta: 'Optimización · Camino de las Piedras', tipo: 'optimizacion' });
+      pasos.push(...optimizar(inicial.problema, inicial.solucion).pasos);
+    }
+    return { balanceado: inicial.problema, pasos, fases };
   }, [problema, config, nombre, optimizarOn]);
 
   const ejecutarComparacion = () => {
@@ -85,13 +90,22 @@ export function Laboratorio({ problema }: { problema: Problema }) {
   };
 
   return (
-    <section className="panel">
-      <h2>Laboratorio: diseña tu propia heurística</h2>
+    <section className="vista">
+      <header className="vista-cabecera">
+        <div>
+          <p className="eyebrow">03 — Laboratorio</p>
+          <h1>Diseña tu propia heurística</h1>
+          <p className="vista-descripcion">
+            En cuatro etapas: reflexiona sobre los métodos clásicos, arma tu regla, pruébala y compárala con ellos en
+            cientos de problemas.
+          </p>
+        </div>
+      </header>
 
-      <article className="etapa">
-        <h3>
+      <article className="tarjeta etapa">
+        <h2>
           <span className="numero">1</span> Reflexiona
-        </h3>
+        </h2>
         <p>
           Toda heurística constructiva del problema de transporte responde a una sola pregunta:{' '}
           <strong>¿qué celda lleno ahora?</strong> Observa qué información usa cada método clásico:
@@ -135,10 +149,10 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         </ul>
       </article>
 
-      <article className="etapa">
-        <h3>
+      <article className="tarjeta etapa">
+        <h2>
           <span className="numero">2</span> Diseña tu regla
-        </h3>
+        </h2>
         <div className="formulario">
           <label>
             Nombre
@@ -189,21 +203,21 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         )}
       </article>
 
-      <article className="etapa">
-        <h3>
+      <article className="tarjeta etapa">
+        <h2>
           <span className="numero">3</span> Pruébala en el problema actual
-        </h3>
-        <label className="check">
+        </h2>
+        <label className="chip-check">
           <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
           Continuar con Camino de las Piedras
         </label>
-        <Reproductor key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problema)}`} problema={balanceado} pasos={pasos} />
+        <Reproductor key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problema)}`} problema={balanceado} pasos={pasos} fases={fases} />
       </article>
 
-      <article className="etapa">
-        <h3>
+      <article className="tarjeta etapa">
+        <h2>
           <span className="numero">4</span> Compárala
-        </h3>
+        </h2>
         <p className="ayuda">
           Se generan problemas aleatorios (3–5 orígenes, 3–6 destinos, costos de 1 a 20). Cada uno se resuelve con tu
           heurística y con los métodos clásicos; el óptimo se obtiene con el Camino de las Piedras. La misma semilla
@@ -252,7 +266,7 @@ function ResultadosComparacion({ resultado, config }: { resultado: ResultadoComp
               <tr key={f.id} className={f.id === 'propia' ? 'propia' : ''}>
                 <td>{f.nombre}</td>
                 <td>
-                  <div className="barra-dato">
+                  <div className={f.id === 'propia' ? 'barra-dato propia' : 'barra-dato'}>
                     <span style={{ width: `${(f.brechaPromedio / maxBrecha) * 100}%` }} />
                     <em>{fmt(f.brechaPromedio)} %</em>
                   </div>

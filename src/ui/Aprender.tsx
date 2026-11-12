@@ -10,8 +10,13 @@ import type { Fase } from './Reproductor';
 
 const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
 
-export function Aprender({ problema }: { problema: Problema }) {
-  const [metodo, setMetodo] = useState<MetodoInicial>('noroeste');
+interface Props {
+  problema: Problema;
+  metodo: MetodoInicial;
+  onMetodo: (m: MetodoInicial) => void;
+}
+
+export function Aprender({ problema, metodo, onMetodo }: Props) {
   const [optimizarOn, setOptimizarOn] = useState(true);
   const [detallado, setDetallado] = useState(false);
   const [practica, setPractica] = useState(false);
@@ -34,12 +39,19 @@ export function Aprender({ problema }: { problema: Problema }) {
           <p className="eyebrow">02 — Aprender</p>
           <h1>Aprende paso a paso</h1>
           <p className="vista-descripcion">
-            Elige un método y avanza con los controles o las flechas del teclado. Cada paso explica qué se hizo y por qué.
+            Elige un método y avanza con los controles o las flechas del teclado. Cada paso explica qué se hizo y por
+            qué.
           </p>
         </div>
         <div className="segmentado" role="radiogroup" aria-label="Método">
           {METODOS.map((k) => (
-            <button key={k} role="radio" aria-checked={metodo === k} className={metodo === k ? 'activo' : ''} onClick={() => setMetodo(k)}>
+            <button
+              key={k}
+              role="radio"
+              aria-checked={metodo === k}
+              className={metodo === k ? 'activo' : ''}
+              onClick={() => onMetodo(k)}
+            >
               {NOMBRE_METODO[k]}
             </button>
           ))}
@@ -52,7 +64,12 @@ export function Aprender({ problema }: { problema: Problema }) {
           Optimizar con Camino de las Piedras
         </label>
         <label className="chip-check">
-          <input type="checkbox" checked={detallado} disabled={!optimizarOn} onChange={(e) => setDetallado(e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={detallado}
+            disabled={!optimizarOn}
+            onChange={(e) => setDetallado(e.target.checked)}
+          />
           Evaluar cada celda vacía
         </label>
         <label className="chip-check">
@@ -92,6 +109,9 @@ export function TarjetaTeoria({ teoria }: { teoria: Teoria }) {
       </p>
       <p>
         <strong>Limitaciones:</strong> {teoria.limitaciones}
+      </p>
+      <p>
+        <strong>Convenciones:</strong> {teoria.convenciones.join(' ')}
       </p>
     </details>
   );

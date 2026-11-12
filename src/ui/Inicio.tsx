@@ -1,5 +1,7 @@
+import type { MetodoInicial } from '../core/metodos';
+
 interface Props {
-  onComenzar: () => void;
+  onMetodo: (m: MetodoInicial) => void;
   onTeoria: () => void;
   onLaboratorio: () => void;
 }
@@ -17,16 +19,30 @@ const FLUJOS: [number, number, number][] = [
   [2, 3, 5],
 ];
 
-const curva = (o: number, d: number) => `M112 ${ORIGENES[o]} C 300 ${ORIGENES[o]}, 300 ${DESTINOS[d]}, 488 ${DESTINOS[d]}`;
+const curva = (o: number, d: number) =>
+  `M112 ${ORIGENES[o]} C 300 ${ORIGENES[o]}, 300 ${DESTINOS[d]}, 488 ${DESTINOS[d]}`;
 
-const MODULOS = [
-  { titulo: 'Esquina Noroeste', texto: 'Llena la tabla de arriba a la izquierda hacia abajo a la derecha, sin mirar los costos.' },
-  { titulo: 'Costo Mínimo', texto: 'En cada paso aprovecha la ruta más barata que siga disponible.' },
-  { titulo: 'Vogel', texto: 'Prioriza las filas y columnas donde equivocarse costaría más.' },
-  { titulo: 'Camino de las Piedras', texto: 'Mejora la solución con caminos cerrados de signos + y − hasta el óptimo.' },
+const MODULOS: { titulo: string; texto: string; metodo: MetodoInicial }[] = [
+  {
+    titulo: 'Esquina Noroeste',
+    texto: 'Llena la tabla de arriba a la izquierda hacia abajo a la derecha, sin mirar los costos.',
+    metodo: 'noroeste',
+  },
+  {
+    titulo: 'Costo Mínimo',
+    texto: 'En cada paso aprovecha la ruta más barata que siga disponible.',
+    metodo: 'costoMinimo',
+  },
+  { titulo: 'Vogel', texto: 'Prioriza las filas y columnas donde equivocarse costaría más.', metodo: 'vogel' },
+  // La optimización se muestra a continuación de la construcción; Esquina Noroeste da el recorrido más largo y más ilustrativo.
+  {
+    titulo: 'Camino de las Piedras',
+    texto: 'Mejora la solución con caminos cerrados de signos + y − hasta el óptimo.',
+    metodo: 'noroeste',
+  },
 ];
 
-export function Inicio({ onComenzar, onTeoria, onLaboratorio }: Props) {
+export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
   return (
     <section>
       <div className="hero">
@@ -45,9 +61,19 @@ export function Inicio({ onComenzar, onTeoria, onLaboratorio }: Props) {
             optimiza con el Camino de las Piedras y diseña tu propia heurística.
           </p>
           <div className="acciones">
-            <button className="primario" onClick={onComenzar}>
+            <button className="primario" onClick={() => onMetodo('noroeste')}>
               Empezar con un ejemplo
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </button>
@@ -67,11 +93,19 @@ export function Inicio({ onComenzar, onTeoria, onLaboratorio }: Props) {
             </defs>
             {ORIGENES.map((_, o) =>
               DESTINOS.map((_, d) =>
-                FLUJOS.some(([fo, fd]) => fo === o && fd === d) ? null : <path key={`${o}-${d}`} className="ruta" d={curva(o, d)} />,
+                FLUJOS.some(([fo, fd]) => fo === o && fd === d) ? null : (
+                  <path key={`${o}-${d}`} className="ruta" d={curva(o, d)} />
+                ),
               ),
             )}
             {FLUJOS.map(([o, d, q]) => (
-              <path key={`${o}-${d}`} className="flujo" d={curva(o, d)} stroke="url(#flujo)" strokeWidth={2 + q * 1.1} />
+              <path
+                key={`${o}-${d}`}
+                className="flujo"
+                d={curva(o, d)}
+                stroke="url(#flujo)"
+                strokeWidth={2 + q * 1.1}
+              />
             ))}
             {ORIGENES.map((y, o) => (
               <g key={o}>
@@ -107,7 +141,7 @@ export function Inicio({ onComenzar, onTeoria, onLaboratorio }: Props) {
       </div>
       <div className="modulos">
         {MODULOS.map((m, k) => (
-          <button key={m.titulo} className="modulo" onClick={onComenzar}>
+          <button key={m.titulo} className="modulo" onClick={() => onMetodo(m.metodo)}>
             <span className={k === 3 ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
             <h3>{m.titulo}</h3>
             <p>{m.texto}</p>

@@ -46,7 +46,8 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
   const setCosto = (i: number, j: number, v: number) =>
     onChange({ ...p, costos: p.costos.map((f, a) => (a === i ? f.map((c, b) => (b === j ? v : c)) : f)) });
   const setOferta = (i: number, v: number) => onChange({ ...p, ofertas: p.ofertas.map((o, a) => (a === i ? v : o)) });
-  const setDemanda = (j: number, v: number) => onChange({ ...p, demandas: p.demandas.map((d, b) => (b === j ? v : d)) });
+  const setDemanda = (j: number, v: number) =>
+    onChange({ ...p, demandas: p.demandas.map((d, b) => (b === j ? v : d)) });
 
   const aleatorio = () => {
     onChange(generarProblema(crearAleatorio(semilla), { m, n }));
@@ -62,8 +63,8 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
           <p className="eyebrow">01 — Problema</p>
           <h1>Define el problema</h1>
           <p className="vista-descripcion">
-            Ingresa el costo de enviar una unidad desde cada origen a cada destino, la oferta de cada origen y la demanda
-            de cada destino. El objetivo es enviarlo todo al menor costo total.
+            Ingresa el costo de enviar una unidad desde cada origen a cada destino, la oferta de cada origen y la
+            demanda de cada destino. El objetivo es enviarlo todo al menor costo total.
           </p>
         </div>
       </header>
@@ -112,7 +113,11 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
                     <th>{o}</th>
                     {p.destinos.map((d, j) => (
                       <td key={d}>
-                        <Numero valor={p.costos[i][j]} etiqueta={`Costo de ${o} a ${d}`} onChange={(v) => setCosto(i, j, v)} />
+                        <Numero
+                          valor={p.costos[i][j]}
+                          etiqueta={`Costo de ${o} a ${d}`}
+                          onChange={(v) => setCosto(i, j, v)}
+                        />
                       </td>
                     ))}
                     <td className="total">
@@ -164,7 +169,17 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
           )}
           <button className="primario" onClick={onContinuar} disabled={errores.length > 0}>
             Resolver paso a paso
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </button>

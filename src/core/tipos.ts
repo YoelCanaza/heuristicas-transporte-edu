@@ -27,7 +27,8 @@ export type TipoPaso =
   | 'evaluacion'
   | 'ciclo'
   | 'pivoteo'
-  | 'optimo';
+  | 'optimo'
+  | 'limite';
 
 /** Fotografía del estado del algoritmo en un instante, con su explicación didáctica. */
 export interface Paso {

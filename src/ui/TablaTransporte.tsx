@@ -46,7 +46,11 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                   marcada?.i === i && marcada?.j === j ? 'marcada' : '',
                 ];
                 return (
-                  <td key={d} className={clases.filter(Boolean).join(' ')} title={`${o} → ${d}: costo ${fmt(p.costos[i][j])}`}>
+                  <td
+                    key={d}
+                    className={clases.filter(Boolean).join(' ')}
+                    title={`${o} → ${d}: costo ${fmt(p.costos[i][j])}`}
+                  >
                     <span className="costo">{fmt(p.costos[i][j])}</span>
                     {signo && <span className="signo">{signo}</span>}
                     {basica ? (
@@ -55,7 +59,11 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                       <span className={marginal < 0 ? 'marginal negativo' : 'marginal'}>{fmt(marginal)}</span>
                     ) : null}
                     {onCeldaClick && (
-                      <button className="celda-boton" aria-label={`Elegir (${o}, ${d})`} onClick={() => onCeldaClick({ i, j })} />
+                      <button
+                        className="celda-boton"
+                        aria-label={`Elegir (${o}, ${d})`}
+                        onClick={() => onCeldaClick({ i, j })}
+                      />
                     )}
                   </td>
                 );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Celda, Paso, Problema } from '../core/tipos';
 import { fmt, nombreCelda } from '../core/util';
+import { TextoConGlosario } from './Glosa';
 import { Leyenda, TablaTransporte } from './TablaTransporte';
 
 export interface Fase {
@@ -28,6 +29,7 @@ const ETIQUETA_TIPO: Record<Paso['tipo'], string> = {
   ciclo: 'Entra a la base',
   pivoteo: 'Nueva solución',
   optimo: 'Óptimo',
+  limite: 'Sin confirmar',
 };
 
 const VELOCIDADES = [
@@ -38,7 +40,17 @@ const VELOCIDADES = [
 
 function Icono({ d }: { d: string }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d={d} />
     </svg>
   );
@@ -62,21 +74,26 @@ export function Reproductor({ problema, pasos, fases, practica = false }: Props)
         : '¿Qué celda entrará a la base? Haz clic en ella.'
       : null;
 
+  /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number) => {
     setIdx(Math.max(0, Math.min(ultimo, k)));
     setFeedback(null);
     setMarcada(null);
+    setReproduciendo(false);
   };
 
+  // La reproducción se pausa sola al final o cuando el modo práctica espera una respuesta.
+  const avanzando = reproduciendo && idx < ultimo && pregunta === null;
+
   useEffect(() => {
-    if (!reproduciendo) return;
-    if (idx >= ultimo || pregunta) {
-      setReproduciendo(false);
-      return;
-    }
-    const t = setTimeout(() => ir(idx + 1), ms);
+    if (!avanzando) return;
+    const t = setTimeout(() => {
+      setIdx((k) => Math.min(ultimo, k + 1));
+      setFeedback(null);
+      setMarcada(null);
+    }, ms);
     return () => clearTimeout(t);
-  });
+  }, [avanzando, idx, ultimo, ms]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
@@ -97,7 +114,10 @@ export function Reproductor({ problema, pasos, fases, practica = false }: Props)
       setFeedback({ ok: true, texto: '¡Correcto!' });
     } else {
       setMarcada(c);
-      setFeedback({ ok: false, texto: 'No es esa celda. Revisa el criterio del método e inténtalo otra vez, o pulsa "Mostrar respuesta".' });
+      setFeedback({
+        ok: false,
+        texto: 'No es esa celda. Revisa el criterio del método e inténtalo otra vez, o pulsa "Mostrar respuesta".',
+      });
     }
   };
 
@@ -107,7 +127,12 @@ export function Reproductor({ problema, pasos, fases, practica = false }: Props)
     <div className="reproductor">
       <div className="reproductor-cuerpo">
         <section className="tarjeta tabla-tarjeta" aria-label="Tabla de transporte">
-          <TablaTransporte problema={problema} paso={paso} onCeldaClick={pregunta ? responder : undefined} marcada={marcada} />
+          <TablaTransporte
+            problema={problema}
+            paso={paso}
+            onCeldaClick={pregunta ? responder : undefined}
+            marcada={marcada}
+          />
           <Leyenda paso={paso} />
         </section>
 
@@ -120,7 +145,7 @@ export function Reproductor({ problema, pasos, fases, practica = false }: Props)
           </div>
           <div className="explicacion-cuerpo" key={idx}>
             <h2>{paso.titulo}</h2>
-            <p>{paso.explicacion}</p>
+            <TextoConGlosario texto={paso.explicacion} />
             {paso.ciclo && <Formula problema={problema} paso={paso} />}
           </div>
           {pregunta && <p className="pregunta">{pregunta}</p>}
@@ -157,15 +182,15 @@ export function Reproductor({ problema, pasos, fases, practica = false }: Props)
           <button className="boton-icono" onClick={() => ir(ultimo)} disabled={idx === ultimo} aria-label="Último paso">
             <Icono d="M7 6l6 6-6 6M17 6v12" />
           </button>
-          <button onClick={() => setReproduciendo((r) => !r)} disabled={idx === ultimo}>
-            {reproduciendo ? (
+          <button onClick={() => setReproduciendo(!avanzando)} disabled={idx === ultimo}>
+            {avanzando ? (
               <Icono d="M8 5v14M16 5v14" />
             ) : (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M7 4l13 8-13 8z" />
               </svg>
             )}
-            {reproduciendo ? 'Pausar' : 'Reproducir'}
+            {avanzando ? 'Pausar' : 'Reproducir'}
           </button>
           <select value={ms} onChange={(e) => setMs(Number(e.target.value))} aria-label="Velocidad">
             {VELOCIDADES.map((v) => (

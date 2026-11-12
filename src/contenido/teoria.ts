@@ -4,9 +4,14 @@ export interface Teoria {
   pasos: string[];
   ventajas: string;
   limitaciones: string;
+  /** Decisiones que los libros resuelven de formas distintas y que esta aplicación fija así. */
+  convenciones: string[];
+  errores: string[];
 }
 
-export const TEORIA: Record<'noroeste' | 'costoMinimo' | 'vogel' | 'piedras', Teoria> = {
+export type TemaTeoria = 'noroeste' | 'costoMinimo' | 'vogel' | 'piedras';
+
+export const TEORIA: Record<TemaTeoria, Teoria> = {
   noroeste: {
     titulo: 'Esquina Noroeste',
     idea: 'Llena la tabla desde la esquina superior izquierda hacia la inferior derecha, como quien lee un texto. No mira los costos.',
@@ -16,18 +21,34 @@ export const TEORIA: Record<'noroeste' | 'costoMinimo' | 'vogel' | 'piedras', Te
       'Tacha la fila o la columna que se agotó y repite.',
     ],
     ventajas: 'Es la más simple y rápida; siempre da una solución factible.',
-    limitaciones: 'Al ignorar los costos suele dar soluciones caras, que requieren muchas iteraciones para optimizarse.',
+    limitaciones:
+      'Al ignorar los costos suele dar soluciones caras, que requieren muchas iteraciones para optimizarse.',
+    convenciones: [
+      'Si la oferta y la demanda se agotan a la vez, se tacha solo la fila (la columna, si es la última fila). La otra línea queda con 0 y recibe una asignación ε.',
+    ],
+    errores: [
+      'Tachar la fila y la columna a la vez cuando ambas se agotan: se pierde una celda básica y luego no se pueden cerrar los caminos.',
+      'Esperar una buena solución: el método nunca consulta los costos.',
+    ],
   },
   costoMinimo: {
     titulo: 'Costo Mínimo',
     idea: 'En cada paso aprovecha la ruta más barata que todavía esté disponible. Es una estrategia voraz (greedy).',
     pasos: [
-      'Busca la celda disponible de menor costo (empate: la que permite asignar más).',
+      'Busca la celda disponible de menor costo en toda la tabla.',
       'Asígnale lo máximo posible.',
       'Tacha la línea agotada y repite.',
     ],
     ventajas: 'Considera los costos; suele ser mucho mejor que la Esquina Noroeste.',
     limitaciones: 'Es miope: tomar hoy la celda más barata puede obligar a usar rutas muy caras al final.',
+    convenciones: [
+      'Empate de costo: se elige la celda que permite asignar más unidades.',
+      'Si el empate continúa: la primera celda en orden de fila y luego de columna.',
+    ],
+    errores: [
+      'Buscar el menor costo solo dentro de una fila, en lugar de en toda la tabla disponible.',
+      'Olvidar descontar la oferta y la demanda después de cada asignación.',
+    ],
   },
   vogel: {
     titulo: 'Aproximación de Vogel (VAM)',
@@ -40,6 +61,15 @@ export const TEORIA: Record<'noroeste' | 'costoMinimo' | 'vogel' | 'piedras', Te
     ],
     ventajas: 'Suele dar soluciones muy cercanas al óptimo (a veces óptimas).',
     limitaciones: 'Requiere más cálculos por iteración.',
+    convenciones: [
+      'Empate de penalización: se elige la línea que contiene el menor costo; si persiste, las filas antes que las columnas, en orden.',
+      'Dentro de la línea: la celda de menor costo; en empate, la que permite asignar más.',
+      'Cuando solo queda una fila o una columna sin tachar, ya no se calculan penalizaciones: se asigna por costo mínimo.',
+    ],
+    errores: [
+      'No recalcular las penalizaciones después de tachar una línea.',
+      'Calcular la penalización como costo mayor menos costo menor, en lugar de la diferencia entre los dos menores.',
+    ],
   },
   piedras: {
     titulo: 'Camino de las Piedras (Stepping Stone)',
@@ -53,5 +83,20 @@ export const TEORIA: Record<'noroeste' | 'costoMinimo' | 'vogel' | 'piedras', Te
     ],
     ventajas: 'Es intuitivo y muestra claramente por qué una solución mejora.',
     limitaciones: 'Evaluar cada celda vacía es laborioso en problemas grandes (el método MODI lo agiliza).',
+    convenciones: [
+      'Entra la celda de costo marginal más negativo; en empate, la primera en orden de fila y columna.',
+      'Si varias celdas con signo − quedan en 0, sale la primera que aparece al recorrer el camino; las demás siguen en la base con ε.',
+      'Si faltan celdas básicas, ε se coloca en la celda vacía de menor costo que no forme un camino cerrado con las básicas.',
+    ],
+    errores: [
+      'Usar una celda vacía como esquina del camino: solo se puede girar en celdas básicas.',
+      'Tomar θ como la menor asignación de todo el camino, en lugar de solo entre las celdas con signo −.',
+    ],
   },
 };
+
+export const CONVENCIONES_GENERALES = [
+  'Si la oferta total y la demanda total no coinciden, se agrega un origen o un destino ficticio con costo 0.',
+  'Los orígenes son las filas (O1, O2, …) y los destinos las columnas (D1, D2, …).',
+  'Si tu libro usa otros criterios de desempate, puedes obtener otra solución inicial igualmente válida; el costo óptimo final es el mismo.',
+];

@@ -10,6 +10,9 @@ diseñar heurísticas propias.
 npm install
 npm run dev      # servidor de desarrollo en http://localhost:5173
 npm test         # pruebas del núcleo algorítmico
+npm run lint     # revisión estática (ESLint)
+npm run formato  # da formato al código (Prettier)
+npm run verificar  # lint + formato + pruebas + build, lo mismo que ejecuta la integración continua
 npm run build    # versión estática en dist/ (publicable en GitHub Pages, Vercel, etc.)
 ```
 
@@ -20,17 +23,19 @@ npm run build    # versión estática en dist/ (publicable en GitHub Pages, Verc
   comparación.
 - `src/ui/` — componentes React (editor, tabla de transporte, reproductor de pasos,
   vistas Aprender y Laboratorio).
-- `src/contenido/` — textos teóricos.
+- `src/contenido/` — textos teóricos, convenciones de desempate y glosario.
+- `.github/workflows/ci.yml` — integración continua: verifica cada subida a `main`.
 - `tests/` — pruebas Vitest (ejemplo de Taha y propiedades en 200 instancias aleatorias).
 
 ## Dependencias de terceros y licencias
 
-| Componente | Uso | Licencia |
-|---|---|---|
-| React, React DOM | Interfaz | MIT |
-| Unbounded (vía @fontsource) | Tipografía de títulos | SIL Open Font License 1.1 |
-| Manrope (vía @fontsource) | Tipografía de texto | SIL Open Font License 1.1 |
-| Vite, Vitest, TypeScript (solo desarrollo) | Construcción y pruebas | MIT / Apache-2.0 |
+| Componente                                 | Uso                    | Licencia                  |
+| ------------------------------------------ | ---------------------- | ------------------------- |
+| React, React DOM                           | Interfaz               | MIT                       |
+| Unbounded (vía @fontsource)                | Tipografía de títulos  | SIL Open Font License 1.1 |
+| Manrope (vía @fontsource)                  | Tipografía de texto    | SIL Open Font License 1.1 |
+| Vite, Vitest, TypeScript (solo desarrollo) | Construcción y pruebas | MIT / Apache-2.0          |
+| ESLint, Prettier (solo desarrollo)         | Calidad del código     | MIT                       |
 
 Las fuentes se distribuyen dentro de la aplicación (no se cargan desde internet). Todos los gráficos (logotipo,
 red de transporte de la portada, íconos) son originales y están dibujados con código.

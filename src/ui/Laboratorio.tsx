@@ -33,7 +33,15 @@ function cargarConfig(): ConfigHeuristica {
   return CONFIG_INICIAL;
 }
 
-function Opciones<T extends string>({ etiquetas, valor, onChange }: { etiquetas: Record<T, string>; valor: T; onChange: (v: T) => void }) {
+function Opciones<T extends string>({
+  etiquetas,
+  valor,
+  onChange,
+}: {
+  etiquetas: Record<T, string>;
+  valor: T;
+  onChange: (v: T) => void;
+}) {
   return (
     <select value={valor} onChange={(e) => onChange(e.target.value as T)}>
       {(Object.keys(etiquetas) as T[]).map((k) => (
@@ -86,7 +94,9 @@ export function Laboratorio({ problema }: { problema: Problema }) {
       selector: SELECTOR[id],
     }));
     const n = Math.max(1, Math.min(1000, instancias));
-    setResultado(comparar([{ id: 'propia', nombre, selector: selectorPersonalizado(config) }, ...clasicos], n, semilla));
+    setResultado(
+      comparar([{ id: 'propia', nombre, selector: selectorPersonalizado(config) }, ...clasicos], n, semilla),
+    );
   };
 
   return (
@@ -144,7 +154,9 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         </div>
         <ul className="preguntas">
           <li>¿Por qué el Costo Mínimo puede terminar usando rutas muy caras al final?</li>
-          <li>¿Qué otra medida, además de la penalización de Vogel, podría indicar que una fila o columna es "urgente"?</li>
+          <li>
+            ¿Qué otra medida, además de la penalización de Vogel, podría indicar que una fila o columna es "urgente"?
+          </li>
           <li>¿Conviene más llenar primero las celdas que permiten mover muchas unidades?</li>
         </ul>
       </article>
@@ -160,7 +172,11 @@ export function Laboratorio({ problema }: { problema: Problema }) {
           </label>
           <label>
             ¿Cómo eliges la celda?
-            <Opciones<ModoSeleccion> etiquetas={ETIQUETA_MODO} valor={config.modo} onChange={(modo) => actualizar({ modo })} />
+            <Opciones<ModoSeleccion>
+              etiquetas={ETIQUETA_MODO}
+              valor={config.modo}
+              onChange={(modo) => actualizar({ modo })}
+            />
           </label>
           {config.modo === 'linea' && (
             <label>
@@ -182,7 +198,11 @@ export function Laboratorio({ problema }: { problema: Problema }) {
           </label>
           <label>
             Si hay empate, elegir…
-            <Opciones<Desempate> etiquetas={ETIQUETA_DESEMPATE} valor={config.desempate} onChange={(desempate) => actualizar({ desempate })} />
+            <Opciones<Desempate>
+              etiquetas={ETIQUETA_DESEMPATE}
+              valor={config.desempate}
+              onChange={(desempate) => actualizar({ desempate })}
+            />
           </label>
         </div>
         <div className="barra">
@@ -211,7 +231,12 @@ export function Laboratorio({ problema }: { problema: Problema }) {
           <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
           Continuar con Camino de las Piedras
         </label>
-        <Reproductor key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problema)}`} problema={balanceado} pasos={pasos} fases={fases} />
+        <Reproductor
+          key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problema)}`}
+          problema={balanceado}
+          pasos={pasos}
+          fases={fases}
+        />
       </article>
 
       <article className="tarjeta etapa">
@@ -226,7 +251,13 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         <div className="barra">
           <label>
             Problemas
-            <input type="number" min={1} max={1000} value={instancias} onChange={(e) => setInstancias(Number(e.target.value))} />
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={instancias}
+              onChange={(e) => setInstancias(Number(e.target.value))}
+            />
           </label>
           <label>
             Semilla
@@ -290,17 +321,22 @@ function interpretar(filas: FilaComparacion[], config: ConfigHeuristica): string
   const vogel = filas.find((f) => f.id === 'vogel')!;
   const minimo = filas.find((f) => f.id === 'costoMinimo')!;
   const puesto = filas.indexOf(propia) + 1;
-  const partes = [`Tu heurística quedó en el puesto ${puesto} de ${filas.length} por brecha promedio (${fmt(propia.brechaPromedio)} %).`];
+  const partes = [
+    `Tu heurística quedó en el puesto ${puesto} de ${filas.length} por brecha promedio (${fmt(propia.brechaPromedio)} %).`,
+  ];
 
   const diferencia = propia.brechaPromedio - vogel.brechaPromedio;
   if (diferencia < -0.05) partes.push(`¡Supera a Vogel en ${fmt(-diferencia)} puntos porcentuales en promedio!`);
   else if (diferencia <= 0.05) partes.push('Rinde prácticamente igual que Vogel.');
-  else if (propia.brechaPromedio < minimo.brechaPromedio) partes.push('Mejora al Costo Mínimo, pero Vogel todavía es mejor.');
+  else if (propia.brechaPromedio < minimo.brechaPromedio)
+    partes.push('Mejora al Costo Mínimo, pero Vogel todavía es mejor.');
   else partes.push('Todavía no supera al Costo Mínimo.');
 
   if (config.criterioCelda === 'noroeste') partes.push('Pista: tu regla elige la celda sin mirar los costos.');
   else if (config.modo === 'celda' && config.criterioCelda === 'menorCosto')
-    partes.push('Pista: elegir siempre la celda más barata es miope; prueba a medir la urgencia de cada fila o columna.');
+    partes.push(
+      'Pista: elegir siempre la celda más barata es miope; prueba a medir la urgencia de cada fila o columna.',
+    );
   else if (config.criterioCelda === 'mayorCantidad')
     partes.push('Pista: mover muchas unidades no sirve de mucho si la ruta es cara; combina la cantidad con el costo.');
 

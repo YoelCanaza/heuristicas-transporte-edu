@@ -47,9 +47,7 @@ interface Linea {
 }
 
 function costosLinea(e: EstadoConstruccion, tipo: 'fila' | 'columna', k: number): number[] {
-  return tipo === 'fila'
-    ? columnasActivas(e).map((j) => e.costos[k][j])
-    : filasActivas(e).map((i) => e.costos[i][k]);
+  return tipo === 'fila' ? columnasActivas(e).map((j) => e.costos[k][j]) : filasActivas(e).map((i) => e.costos[i][k]);
 }
 
 export const selectorVogel: Selector = (e, p) => {

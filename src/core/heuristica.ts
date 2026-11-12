@@ -43,9 +43,27 @@ export const ETIQUETA_DESEMPATE: Record<Desempate, string> = {
 };
 
 export const PRESETS: Record<'noroeste' | 'costoMinimo' | 'vogel', ConfigHeuristica> = {
-  noroeste: { nombre: 'Esquina Noroeste', modo: 'celda', criterioLinea: 'penalizacion', criterioCelda: 'noroeste', desempate: 'orden' },
-  costoMinimo: { nombre: 'Costo Mínimo', modo: 'celda', criterioLinea: 'penalizacion', criterioCelda: 'menorCosto', desempate: 'mayorCantidad' },
-  vogel: { nombre: 'Vogel', modo: 'linea', criterioLinea: 'penalizacion', criterioCelda: 'menorCosto', desempate: 'mayorCantidad' },
+  noroeste: {
+    nombre: 'Esquina Noroeste',
+    modo: 'celda',
+    criterioLinea: 'penalizacion',
+    criterioCelda: 'noroeste',
+    desempate: 'orden',
+  },
+  costoMinimo: {
+    nombre: 'Costo Mínimo',
+    modo: 'celda',
+    criterioLinea: 'penalizacion',
+    criterioCelda: 'menorCosto',
+    desempate: 'mayorCantidad',
+  },
+  vogel: {
+    nombre: 'Vogel',
+    modo: 'linea',
+    criterioLinea: 'penalizacion',
+    criterioCelda: 'menorCosto',
+    desempate: 'mayorCantidad',
+  },
 };
 
 export const CONFIG_INICIAL: ConfigHeuristica = {
@@ -60,7 +78,12 @@ export const CONFIG_INICIAL: ConfigHeuristica = {
 export function equivalencia(c: ConfigHeuristica): string | null {
   if (c.modo === 'celda' && c.criterioCelda === 'noroeste') return 'Esquina Noroeste';
   if (c.modo === 'celda' && c.criterioCelda === 'menorCosto' && c.desempate === 'mayorCantidad') return 'Costo Mínimo';
-  if (c.modo === 'linea' && c.criterioLinea === 'penalizacion' && c.criterioCelda === 'menorCosto' && c.desempate === 'mayorCantidad')
+  if (
+    c.modo === 'linea' &&
+    c.criterioLinea === 'penalizacion' &&
+    c.criterioCelda === 'menorCosto' &&
+    c.desempate === 'mayorCantidad'
+  )
     return 'Aproximación de Vogel';
   return null;
 }
@@ -147,7 +170,10 @@ export function selectorPersonalizado(c: ConfigHeuristica): Selector {
       };
     }
 
-    const celda = elegirMejor(candidatas, (cel) => [valorCelda(e, c.criterioCelda, cel), valorCelda(e, c.desempate, cel)]);
+    const celda = elegirMejor(candidatas, (cel) => [
+      valorCelda(e, c.criterioCelda, cel),
+      valorCelda(e, c.desempate, cel),
+    ]);
     return {
       celda,
       analisis,

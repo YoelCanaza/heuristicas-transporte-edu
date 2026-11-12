@@ -1,0 +1,84 @@
+import { GLOSARIO } from '../contenido/glosario';
+import { CONVENCIONES_GENERALES, TEORIA } from '../contenido/teoria';
+import type { TemaTeoria } from '../contenido/teoria';
+import type { MetodoInicial } from '../core/metodos';
+
+const TEMAS: TemaTeoria[] = ['noroeste', 'costoMinimo', 'vogel', 'piedras'];
+
+export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial) => void }) {
+  return (
+    <section className="vista">
+      <header className="vista-cabecera">
+        <div>
+          <p className="eyebrow">Teoría</p>
+          <h1>Los métodos, en breve</h1>
+          <p className="vista-descripcion">
+            La idea de cada método, sus pasos, los errores más comunes y las convenciones que usa esta aplicación cuando
+            hay empates.
+          </p>
+        </div>
+      </header>
+
+      <div className="teoria-grid">
+        {TEMAS.map((tema, k) => {
+          const t = TEORIA[tema];
+          return (
+            <article key={tema} className="tarjeta teoria-tarjeta">
+              <span className={tema === 'piedras' ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
+              <h2>{t.titulo}</h2>
+              <p className="teoria-idea">{t.idea}</p>
+              <h3>Pasos</h3>
+              <ol>
+                {t.pasos.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ol>
+              <dl className="teoria-balance">
+                <dt>Ventajas</dt>
+                <dd>{t.ventajas}</dd>
+                <dt>Limitaciones</dt>
+                <dd>{t.limitaciones}</dd>
+              </dl>
+              <h3>Errores frecuentes</h3>
+              <ul>
+                {t.errores.map((e) => (
+                  <li key={e}>{e}</li>
+                ))}
+              </ul>
+              <h3>Convenciones de esta aplicación</h3>
+              <ul>
+                {t.convenciones.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+              <button className="secundario" onClick={() => onPractica(tema === 'piedras' ? 'noroeste' : tema)}>
+                Verlo paso a paso
+              </button>
+            </article>
+          );
+        })}
+      </div>
+
+      <article className="tarjeta">
+        <h2 className="titulo-seccion">Convenciones generales</h2>
+        <ul className="lista-simple">
+          {CONVENCIONES_GENERALES.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
+      </article>
+
+      <article className="tarjeta">
+        <h2 className="titulo-seccion">Glosario</h2>
+        <dl className="glosario">
+          {GLOSARIO.map((g) => (
+            <div key={g.termino}>
+              <dt>{g.termino}</dt>
+              <dd>{g.definicion}</dd>
+            </div>
+          ))}
+        </dl>
+      </article>
+    </section>
+  );
+}

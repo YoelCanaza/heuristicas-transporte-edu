@@ -99,7 +99,10 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.1s;
 }
 
 button:hover:not(:disabled) {
@@ -164,10 +167,15 @@ input[type='number']::-webkit-outer-spin-button {
 select {
   appearance: none;
   padding-right: 2.2rem;
-  background-image: linear-gradient(45deg, transparent 50%, var(--apagado) 50%),
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--apagado) 50%),
     linear-gradient(135deg, var(--apagado) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
-  background-size: 5px 5px, 5px 5px;
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 13px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
   background-repeat: no-repeat;
   cursor: pointer;
 }
@@ -855,7 +863,10 @@ input[type='checkbox'] {
   background: var(--superficie);
   box-shadow: inset 0 0 0 1px var(--linea);
   text-align: center;
-  transition: background 0.25s, box-shadow 0.25s, opacity 0.25s;
+  transition:
+    background 0.25s,
+    box-shadow 0.25s,
+    opacity 0.25s;
 }
 
 .tabla-transporte .celda.basica {
@@ -1547,4 +1558,153 @@ input[type='checkbox'] {
   .tarjeta {
     padding: 1rem;
   }
+}
+
+/* ───────── Glosario contextual ───────── */
+.con-glosario {
+  position: relative;
+}
+
+.termino {
+  border-bottom: 1.5px dotted var(--azul);
+  cursor: help;
+}
+
+.termino-def {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 5;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: var(--marino);
+  color: var(--sobre-marino);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  box-shadow: 0 8px 24px var(--sombra);
+}
+
+.termino:hover .termino-def,
+.termino:focus .termino-def {
+  display: block;
+}
+
+/* ───────── Página de teoría ───────── */
+.teoria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 1.25rem;
+}
+
+.teoria-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.teoria-tarjeta h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.teoria-tarjeta h3 {
+  margin: 0.75rem 0 0;
+  font-family: var(--fuente);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+
+.teoria-idea {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--tinta-suave);
+}
+
+.teoria-tarjeta ol,
+.teoria-tarjeta ul,
+.lista-simple {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--tinta-suave);
+}
+
+.teoria-tarjeta li,
+.lista-simple li {
+  margin: 0.3rem 0;
+}
+
+.teoria-balance {
+  margin: 0.75rem 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+  padding: 1rem;
+  border-radius: var(--radio-sm);
+  background: var(--superficie-2);
+}
+
+.teoria-balance dt {
+  font-weight: 700;
+}
+
+.teoria-balance dd {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+
+.teoria-tarjeta > button {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.teoria-tarjeta > ul:last-of-type {
+  margin-bottom: 1rem;
+}
+
+.titulo-seccion {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.glosario {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1.25rem 2rem;
+}
+
+.glosario dt {
+  font-weight: 800;
+}
+
+.glosario dd {
+  margin: 0.2rem 0 0;
+  color: var(--tinta-suave);
+}
+
+.aviso-vista {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.aviso-vista h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.aviso-vista p {
+  margin: 0;
+  color: var(--tinta-suave);
+}
+
+.etiqueta-limite {
+  background: var(--ambar-suave);
+  color: var(--tinta);
 }

@@ -69,7 +69,7 @@ export function buscarCiclo(basica: boolean[][], entrada: Celda): Celda[] | null
   if (!previo.has(meta)) return null;
 
   const ciclo = [entrada];
-  for (let v = meta; v !== inicio; ) {
+  for (let v = meta; v !== inicio;) {
     const { nodo, celda } = previo.get(v)!;
     ciclo.push(celda);
     v = nodo;
@@ -82,9 +82,7 @@ export function costoMarginal(p: Problema, ciclo: Celda[]): number {
 }
 
 function expresionMarginal(p: Problema, ciclo: Celda[]): string {
-  return ciclo
-    .map((c, k) => `${k === 0 ? '' : k % 2 === 0 ? ' + ' : ' − '}${fmt(p.costos[c.i][c.j])}`)
-    .join('');
+  return ciclo.map((c, k) => `${k === 0 ? '' : k % 2 === 0 ? ' + ' : ' − '}${fmt(p.costos[c.i][c.j])}`).join('');
 }
 
 function ruta(p: Problema, ciclo: Celda[]): string {
@@ -102,6 +100,8 @@ export interface ResultadoOptimizacion {
   solucion: Solucion;
   costo: number;
   iteraciones: number;
+  /** false si se detuvo por el límite de iteraciones sin confirmar la optimalidad. */
+  optimo: boolean;
 }
 
 export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOptimizacion = {}): ResultadoOptimizacion {
@@ -144,6 +144,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
   }
 
   let iteraciones = 0;
+  let optimo = false;
   for (;;) {
     const marginales = matriz<number | null>(m, n, null);
     const ciclos = matriz<Celda[] | null>(m, n, null);
@@ -183,7 +184,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
       }
     }
 
-    if (!entrada || iteraciones >= maxIteraciones) {
+    if (!entrada) {
       const ceros = marginales.flatMap((fila, i) =>
         fila.flatMap((v, j) => (v !== null && Math.abs(v) <= EPS ? [nombreCelda(p, { i, j })] : [])),
       );
@@ -192,13 +193,28 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
           tipo: 'optimo',
           titulo: `Solución óptima: costo ${fmt(costoTotal(p.costos, sol.x))}`,
           explicacion:
-            (entrada
-              ? `Se alcanzó el límite de ${maxIteraciones} iteraciones. `
-              : 'Todos los costos marginales son mayores o iguales a 0: ninguna celda vacía puede reducir el costo. ') +
+            'Todos los costos marginales son mayores o iguales a 0: ninguna celda vacía puede reducir el costo. ' +
             `Costo total = ${desgloseCosto(p, sol.x)}.` +
             (ceros.length > 0
               ? ` Las celdas ${ceros.join(', ')} tienen marginal 0: existen soluciones óptimas alternativas.`
               : ''),
+          marginales,
+        }),
+      );
+      optimo = true;
+      break;
+    }
+
+    if (iteraciones >= maxIteraciones) {
+      // Sin esto, una base degenerada podría hacer que el método repita bases indefinidamente.
+      pasos.push(
+        foto({
+          tipo: 'limite',
+          titulo: `Se detuvo sin confirmar el óptimo: costo ${fmt(costoTotal(p.costos, sol.x))}`,
+          explicacion:
+            `Se alcanzó el límite de ${maxIteraciones} iteraciones y todavía hay celdas con costo marginal negativo, ` +
+            'así que esta solución no está confirmada como óptima. Suele ocurrir cuando la solución es degenerada ' +
+            'y el método repite las mismas bases.',
           marginales,
         }),
       );
@@ -247,5 +263,5 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
     );
   }
 
-  return { pasos, solucion: sol, costo: costoTotal(p.costos, sol.x), iteraciones };
+  return { pasos, solucion: sol, costo: costoTotal(p.costos, sol.x), iteraciones, optimo };
 }

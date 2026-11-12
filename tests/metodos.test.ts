@@ -18,8 +18,18 @@ function contarBasicas(s: Solucion): number {
 function esFactible(p: Problema, s: Solucion): boolean {
   const ok = (a: number, b: number) => Math.abs(a - b) < 1e-6;
   return (
-    p.ofertas.every((o, i) => ok(s.x[i].reduce((a, b) => a + b, 0), o)) &&
-    p.demandas.every((d, j) => ok(s.x.reduce((a, f) => a + f[j], 0), d)) &&
+    p.ofertas.every((o, i) =>
+      ok(
+        s.x[i].reduce((a, b) => a + b, 0),
+        o,
+      ),
+    ) &&
+    p.demandas.every((d, j) =>
+      ok(
+        s.x.reduce((a, f) => a + f[j], 0),
+        d,
+      ),
+    ) &&
     s.x.flat().every((v) => v >= 0)
   );
 }
@@ -45,8 +55,30 @@ describe('ejemplo de Taha', () => {
   });
 });
 
+describe('límite de iteraciones', () => {
+  it('no afirma optimalidad si se detiene antes de terminar', () => {
+    const r = resolverMetodo(EJEMPLO_TAHA, 'noroeste');
+    const opt = optimizar(r.problema, r.solucion, { maxIteraciones: 1 });
+    expect(opt.optimo).toBe(false);
+    expect(opt.pasos.at(-1)?.tipo).toBe('limite');
+    expect(opt.pasos.some((p) => p.tipo === 'optimo')).toBe(false);
+  });
+
+  it('marca la solución como óptima cuando termina normalmente', () => {
+    const r = resolverMetodo(EJEMPLO_TAHA, 'noroeste');
+    expect(optimizar(r.problema, r.solucion).optimo).toBe(true);
+  });
+});
+
 describe('balanceo', () => {
-  const base = { costos: [[1, 2], [3, 4]], origenes: nombres('O', 2), destinos: nombres('D', 2) };
+  const base = {
+    costos: [
+      [1, 2],
+      [3, 4],
+    ],
+    origenes: nombres('O', 2),
+    destinos: nombres('D', 2),
+  };
 
   it('agrega destino ficticio si sobra oferta', () => {
     const b = balancear({ ...base, ofertas: [30, 20], demandas: [10, 25] });
@@ -67,7 +99,11 @@ describe('degeneración', () => {
     const p: Problema = {
       ofertas: [10, 10, 10],
       demandas: [10, 10, 10],
-      costos: [[1, 5, 9], [4, 2, 8], [7, 6, 3]],
+      costos: [
+        [1, 5, 9],
+        [4, 2, 8],
+        [7, 6, 3],
+      ],
       origenes: nombres('O', 3),
       destinos: nombres('D', 3),
     };

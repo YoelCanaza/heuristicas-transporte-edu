@@ -13,6 +13,8 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
   const signos = new Map<string, '+' | '−'>();
   paso.ciclo?.forEach((c, k) => signos.set(`${c.i},${c.j}`, k % 2 === 0 ? '+' : '−'));
   const conPenal = !!paso.penalFila;
+  const elegida = (tipo: 'fila' | 'columna', k: number) =>
+    paso.lineaElegida?.tipo === tipo && paso.lineaElegida.k === k;
 
   return (
     <div className="tabla-contenedor">
@@ -71,7 +73,11 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
               <td className={`total ${paso.filaTachada?.[i] ? 'tachada' : ''}`}>
                 <Cantidad original={p.ofertas[i]} restante={paso.ofertaRestante?.[i]} />
               </td>
-              {conPenal && <td className="penal">{paso.penalFila![i] != null ? fmt(paso.penalFila![i]!) : ''}</td>}
+              {conPenal && (
+                <td className={elegida('fila', i) ? 'penal elegida' : 'penal'}>
+                  {paso.penalFila![i] != null ? fmt(paso.penalFila![i]!) : ''}
+                </td>
+              )}
             </tr>
           ))}
           <tr className="fila-demanda">
@@ -88,7 +94,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
             <tr className="fila-demanda">
               <th className="etiqueta-fila">VALOR</th>
               {p.destinos.map((d, j) => (
-                <td key={d} className="penal">
+                <td key={d} className={elegida('columna', j) ? 'penal elegida' : 'penal'}>
                   {paso.penalColumna![j] != null ? fmt(paso.penalColumna![j]!) : ''}
                 </td>
               ))}

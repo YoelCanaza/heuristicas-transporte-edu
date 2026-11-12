@@ -11,6 +11,12 @@ export interface Celda {
   j: number;
 }
 
+/** Fila o columna de la tabla. */
+export interface Linea {
+  tipo: 'fila' | 'columna';
+  k: number;
+}
+
 export interface Solucion {
   x: number[][];
   /** Celdas básicas; una básica con x = 0 representa ε (degeneración). */
@@ -43,6 +49,8 @@ export interface Paso {
   columnaTachada?: boolean[];
   penalFila?: (number | null)[];
   penalColumna?: (number | null)[];
+  /** Fila o columna elegida en el análisis (p. ej. la de mayor penalización en Vogel). */
+  lineaElegida?: Linea;
   /** Celda protagonista del paso (asignada, evaluada o que entra a la base). */
   celda?: Celda;
   /** Camino cerrado; los signos alternan +, −, +, … empezando por ciclo[0]. */

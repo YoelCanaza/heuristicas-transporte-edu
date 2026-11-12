@@ -89,6 +89,7 @@ export function Aprender({ problema, metodo, onMetodo }: Props) {
         pasos={pasos}
         fases={fases}
         practica={practica}
+        metodo={metodo}
       />
     </section>
   );

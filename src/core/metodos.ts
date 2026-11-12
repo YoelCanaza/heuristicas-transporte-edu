@@ -39,7 +39,7 @@ export function penalizacion(costos: number[]): number {
   return v.length >= 2 ? v[1] - v[0] : v[0];
 }
 
-interface Linea {
+interface LineaVogel {
   tipo: 'fila' | 'columna';
   k: number;
   penal: number;
@@ -61,7 +61,7 @@ export const selectorVogel: Selector = (e, p) => {
     };
   }
 
-  const lineas: Linea[] = [
+  const lineas: LineaVogel[] = [
     ...filas.map((i) => ({ tipo: 'fila' as const, k: i, costos: costosLinea(e, 'fila', i) })),
     ...cols.map((j) => ({ tipo: 'columna' as const, k: j, costos: costosLinea(e, 'columna', j) })),
   ].map(({ tipo, k, costos }) => ({ tipo, k, penal: penalizacion(costos), minCosto: Math.min(...costos) }));
@@ -87,6 +87,7 @@ export const selectorVogel: Selector = (e, p) => {
         (empatadas > 1 ? ` Hay ${empatadas} líneas empatadas; se elige la que contiene el menor costo.` : ''),
       penalFila,
       penalColumna,
+      linea: { tipo: linea.tipo, k: linea.k },
     },
     motivo: `En la ${linea.tipo} ${nombreLinea} (penalización ${fmt(linea.penal)}) la celda de menor costo es ${nombreCelda(p, celda)} con costo ${fmt(e.costos[celda.i][celda.j])}.`,
   };

@@ -1,4 +1,4 @@
-import type { Celda, Paso, Problema, Solucion } from './tipos';
+import type { Celda, Linea, Paso, Problema, Solucion } from './tipos';
 import { EPS, copiar, costoTotal, fmt, matriz, nombreCelda } from './util';
 
 export interface EstadoConstruccion {
@@ -18,6 +18,7 @@ export interface Seleccion {
     explicacion: string;
     penalFila?: (number | null)[];
     penalColumna?: (number | null)[];
+    linea?: Linea;
   };
 }
 
@@ -77,6 +78,7 @@ export function construir(p: Problema, selector: Selector): { solucion: Solucion
           explicacion: sel.analisis.explicacion,
           penalFila: sel.analisis.penalFila,
           penalColumna: sel.analisis.penalColumna,
+          lineaElegida: sel.analisis.linea,
         }),
       );
     }

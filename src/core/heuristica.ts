@@ -167,6 +167,7 @@ export function selectorPersonalizado(c: ConfigHeuristica): Selector {
         explicacion: `Se calcula para cada fila y columna sin tachar el valor de "${ETIQUETA_LINEA[c.criterioLinea]}". Se elige la ${linea.tipo} ${nombre}, con el mayor valor (${fmt(linea.valor)}).`,
         penalFila,
         penalColumna,
+        linea: { tipo: linea.tipo, k: linea.k },
       };
     }
 

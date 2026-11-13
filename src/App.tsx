@@ -60,6 +60,11 @@ export function App() {
   }, [tema]);
 
   useEffect(() => {
+    const etiqueta = VISTAS.find((v) => v.id === vista)?.etiqueta;
+    document.title = etiqueta && vista !== 'inicio' ? `${etiqueta} · HeurisTrans` : 'HeurisTrans';
+  }, [vista]);
+
+  useEffect(() => {
     try {
       localStorage.setItem(CLAVE_PROBLEMA, JSON.stringify(problema));
     } catch {

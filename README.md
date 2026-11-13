@@ -64,7 +64,7 @@ El laboratorio sigue los pasos de una pequeña investigación:
 
 ```bash
 npm install
-npm run dev        # servidor de desarrollo en http://localhost:5173
+npm run dev        # servidor de desarrollo en http://localhost:5180 (o el siguiente puerto libre)
 npm test           # pruebas automatizadas
 npm run lint       # revisión estática (ESLint)
 npm run formato    # da formato al código (Prettier)

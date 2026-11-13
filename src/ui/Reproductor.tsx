@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { diagnosticarAsignacion, diagnosticarEntrada, recordarCriterio, validarTrazo } from '../core/diagnostico';
 import type { MetodoInicial } from '../core/metodos';
 import type { Celda, Paso, Problema } from '../core/tipos';
-import { fmt, nombreCelda } from '../core/util';
+import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
 import { TextoConGlosario } from './Glosa';
 import { Leyenda, TablaTransporte } from './TablaTransporte';
 
@@ -276,7 +276,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
             </p>
           )}
           <div className="costo-grande">
-            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <strong>{fmt(paso.costoTotal)}</strong>
+            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <strong>{fmtTotal(problema, paso.x)}</strong>
           </div>
         </aside>
       </div>
@@ -357,10 +357,10 @@ function Formula({ problema: p, paso }: { problema: Problema; paso: Paso }) {
           {ciclo.map((c, k) => (
             <span key={k} className={k % 2 === 0 ? 't-mas' : 't-menos'}>
               {k % 2 === 0 ? '+' : '−'}
-              {fmt(p.costos[c.i][c.j])}{' '}
+              {fmtCosto(p, p.costos[c.i][c.j])}{' '}
             </span>
           ))}
-          = <span className={marginal < 0 ? 't-menos' : ''}>{fmt(marginal)}</span>
+          = <span className={marginal < 0 ? 't-menos' : ''}>{fmtCosto(p, marginal)}</span>
         </strong>
       </div>
       {paso.tipo === 'ciclo' && (

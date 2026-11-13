@@ -48,6 +48,28 @@ export function fmt(v: number): string {
   return String(Math.round(v * 100) / 100);
 }
 
+/**
+ * Formatea un costo, una penalización o un costo marginal. Si el problema tiene rutas
+ * prohibidas, los valores que contienen el costo M se escriben con la letra: "M", "M − 7", "−M + 3".
+ */
+export function fmtCosto(p: Problema, v: number): string {
+  if (p.M === undefined) return fmt(v);
+  const k = Math.round(v / p.M);
+  if (k === 0) return fmt(v);
+  const resto = v - k * p.M;
+  const base = `${k < 0 ? '−' : ''}${Math.abs(k) === 1 ? '' : Math.abs(k)}M`;
+  return Math.abs(resto) <= EPS ? base : `${base} ${resto > 0 ? '+' : '−'} ${fmt(Math.abs(resto))}`;
+}
+
+/** Formatea el total de una solución; si envía por rutas prohibidas, separa la parte que vale M. */
+export function fmtTotal(p: Problema, x: number[][]): string {
+  const usadas = prohibidasUsadas(p, x);
+  if (p.M === undefined || p.utilidades || usadas.length === 0) return fmt(total(p, x));
+  const k = usadas.reduce((t, c) => t + x[c.i][c.j], 0);
+  const resto = total(p, x) - k * p.M;
+  return `${k === 1 ? '' : fmt(k)}M${resto > EPS ? ` + ${fmt(resto)}` : ''}`;
+}
+
 export function nombreCelda(p: Problema, c: Celda): string {
   return `(${p.origenes[c.i]}, ${p.destinos[c.j]})`;
 }
@@ -76,8 +98,9 @@ export function desgloseCosto(p: Problema, x: number[][]): string {
   const terminos: string[] = [];
   for (let i = 0; i < x.length; i++) {
     for (let j = 0; j < x[i].length; j++) {
-      if (x[i][j] > EPS) terminos.push(`${fmt(valores[i][j])}·${fmt(x[i][j])}`);
+      if (x[i][j] > EPS)
+        terminos.push(`${p.utilidades ? fmt(valores[i][j]) : fmtCosto(p, valores[i][j])}·${fmt(x[i][j])}`);
     }
   }
-  return `${terminos.join(' + ')} = ${fmt(costoTotal(valores, x))}`;
+  return `${terminos.join(' + ')} = ${fmtTotal(p, x)}`;
 }

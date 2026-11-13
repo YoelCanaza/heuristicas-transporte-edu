@@ -75,6 +75,18 @@ export const GLOSARIO: Termino[] = [
     patron: /soluciones óptimas alternativas/i,
   },
   {
+    termino: 'Costo de oportunidad',
+    definicion:
+      'En un problema de maximización, lo que se deja de ganar por cada unidad enviada por una ruta: la mayor utilidad de la tabla menos la utilidad de esa ruta.',
+    patron: /costos? de oportunidad/i,
+  },
+  {
+    termino: 'Costo M',
+    definicion:
+      'Costo muy grande que se asigna a una ruta prohibida para que ningún método la elija. Si la solución óptima aún la usa, el problema no tiene solución sin esa ruta.',
+    patron: /costo M\b/,
+  },
+  {
     termino: 'Heurística',
     definicion:
       'Regla práctica que encuentra una buena solución con poco esfuerzo, sin garantizar que sea la mejor posible.',

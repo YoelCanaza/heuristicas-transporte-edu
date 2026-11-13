@@ -1,5 +1,5 @@
 import { GLOSARIO } from '../contenido/glosario';
-import { CONVENCIONES_GENERALES, TEORIA } from '../contenido/teoria';
+import { CONVENCIONES_GENERALES, TEORIA, VARIANTES } from '../contenido/teoria';
 import type { TemaTeoria } from '../contenido/teoria';
 import type { MetodoInicial } from '../core/metodos';
 
@@ -58,6 +58,32 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial) => 
           );
         })}
       </div>
+
+      <h2 className="titulo-seccion titulo-bloque">Variantes del problema</h2>
+      <div className="teoria-grid">
+        {VARIANTES.map((v) => (
+          <article key={v.titulo} className="tarjeta teoria-tarjeta">
+            <h2>{v.titulo}</h2>
+            <p className="teoria-idea">{v.idea}</p>
+            <h3>Pasos</h3>
+            <ol>
+              {v.pasos.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ol>
+            <h3>Errores frecuentes</h3>
+            <ul>
+              {v.errores.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+      <p className="ayuda">
+        Ambas se activan en la pantalla Problema: el selector «Maximizar utilidad» y la casilla «Marcar rutas
+        prohibidas».
+      </p>
 
       <article className="tarjeta">
         <h2 className="titulo-seccion">Convenciones generales</h2>

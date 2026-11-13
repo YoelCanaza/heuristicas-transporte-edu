@@ -98,5 +98,46 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
 export const CONVENCIONES_GENERALES = [
   'Si la oferta total y la demanda total no coinciden, se agrega un origen o un destino ficticio con costo 0.',
   'Los orígenes son las filas (O1, O2, …) y los destinos las columnas (D1, D2, …).',
+  'M es una potencia de 10 mayor que cualquier costo total posible del problema (como mínimo 1000). La tabla y las explicaciones la escriben con la letra M.',
   'Si tu libro usa otros criterios de desempate, puedes obtener otra solución inicial igualmente válida; el costo óptimo final es el mismo.',
+];
+
+export interface Variante {
+  titulo: string;
+  idea: string;
+  pasos: string[];
+  errores: string[];
+}
+
+/** Variantes del problema que se reducen al caso estándar antes de aplicar cualquier método. */
+export const VARIANTES: Variante[] = [
+  {
+    titulo: 'Maximizar utilidades',
+    idea: 'Los métodos de esta aplicación minimizan. Un problema de utilidades se convierte primero en uno de costos de oportunidad y después se resuelve igual que siempre.',
+    pasos: [
+      'Balancea el problema; la línea ficticia tiene utilidad 0.',
+      'Ubica la mayor utilidad de la tabla.',
+      'Reemplaza cada utilidad por su costo de oportunidad: la mayor utilidad menos la utilidad de la celda.',
+      'Resuelve la tabla de costos de oportunidad como un problema de minimización.',
+      'Calcula la utilidad total con las utilidades originales, no con los costos de oportunidad.',
+    ],
+    errores: [
+      'Aplicar Costo Mínimo o Vogel directamente sobre las utilidades: se elegirían las rutas que menos ganan.',
+      'Informar como resultado el costo de oportunidad total en lugar de la utilidad.',
+    ],
+  },
+  {
+    titulo: 'Rutas prohibidas',
+    idea: 'Cuando no se puede enviar por una ruta, se le asigna un costo muy grande, llamado M. Los métodos la evitan por sí solos porque siempre hay algo más barato.',
+    pasos: [
+      'Asigna el costo M a cada ruta prohibida. En un problema de maximización, hazlo después de convertir a costos de oportunidad.',
+      'Aplica el método elegido sin cambiar sus reglas. M es mayor que cualquier otro costo, y M menos cualquier número sigue siendo muy grande.',
+      'Optimiza. Un costo marginal como "−M + 7" es negativo: esa celda entra a la base.',
+      'Revisa la solución final: si todavía envía unidades por una ruta prohibida, el problema no tiene solución con esas prohibiciones.',
+    ],
+    errores: [
+      'Poner costo 0 a la ruta prohibida: los métodos la elegirían primero.',
+      'Dar por buena una solución inicial que usa una ruta prohibida. La Esquina Noroeste puede caer en una porque no mira los costos; la optimización la saca si hay alternativa.',
+    ],
+  },
 ];

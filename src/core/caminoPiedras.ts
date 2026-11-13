@@ -1,5 +1,17 @@
 import type { Celda, Paso, Problema, Solucion } from './tipos';
-import { EPS, copiar, desgloseCosto, fmt, matriz, nombreCelda, palabraTotal, prohibidasUsadas, total } from './util';
+import {
+  EPS,
+  copiar,
+  desgloseCosto,
+  fmt,
+  fmtCosto,
+  fmtTotal,
+  matriz,
+  nombreCelda,
+  palabraTotal,
+  prohibidasUsadas,
+  total,
+} from './util';
 
 /**
  * Si hay menos de m+n−1 celdas básicas, agrega celdas ε (x = 0) de menor costo que unan
@@ -82,7 +94,9 @@ export function costoMarginal(p: Problema, ciclo: Celda[]): number {
 }
 
 function expresionMarginal(p: Problema, ciclo: Celda[]): string {
-  return ciclo.map((c, k) => `${k === 0 ? '' : k % 2 === 0 ? ' + ' : ' − '}${fmt(p.costos[c.i][c.j])}`).join('');
+  return ciclo
+    .map((c, k) => `${k === 0 ? '' : k % 2 === 0 ? ' + ' : ' − '}${fmtCosto(p, p.costos[c.i][c.j])}`)
+    .join('');
 }
 
 function ruta(p: Problema, ciclo: Celda[]): string {
@@ -123,7 +137,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
       tipo: 'inicio',
       titulo: 'Camino de las Piedras',
       explicacion:
-        `Se parte de la solución inicial (${palabra} ${fmt(total(p, sol.x))}). ` +
+        `Se parte de la solución inicial (${palabra} ${fmtTotal(p, sol.x)}). ` +
         'Para cada celda vacía se forma un camino cerrado que salta solo por celdas básicas, ' +
         'alternando signos + y −. La suma de costos con esos signos es el costo marginal: ' +
         'cuánto cambiaría el costo total por cada unidad enviada por esa celda.',
@@ -164,7 +178,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
               titulo: `Evaluar ${nombreCelda(p, { i, j })}`,
               explicacion:
                 `Camino cerrado: ${ruta(p, ciclo)}. ` +
-                `Costo marginal = ${expresionMarginal(p, ciclo)} = ${fmt(valor)}. ` +
+                `Costo marginal = ${expresionMarginal(p, ciclo)} = ${fmtCosto(p, valor)}. ` +
                 (valor < -EPS
                   ? 'Es negativo: enviar por esta celda reduciría el costo.'
                   : 'No es negativo: usar esta celda no mejora la solución.'),
@@ -196,7 +210,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
           titulo:
             usadas.length > 0
               ? 'No hay solución sin rutas prohibidas'
-              : `Solución óptima: ${palabra} ${fmt(total(p, sol.x))}`,
+              : `Solución óptima: ${palabra} ${fmtTotal(p, sol.x)}`,
           explicacion:
             'Todos los costos marginales son mayores o iguales a 0: ninguna celda vacía puede reducir el costo' +
             (p.utilidades ? ' de oportunidad, así que la utilidad ya no puede aumentar. ' : '. ') +
@@ -220,7 +234,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
       pasos.push(
         foto({
           tipo: 'limite',
-          titulo: `Se detuvo sin confirmar el óptimo: ${palabra} ${fmt(total(p, sol.x))}`,
+          titulo: `Se detuvo sin confirmar el óptimo: ${palabra} ${fmtTotal(p, sol.x)}`,
           explicacion:
             `Se alcanzó el límite de ${maxIteraciones} iteraciones y todavía hay celdas con costo marginal negativo, ` +
             'así que esta solución no está confirmada como óptima. Suele ocurrir cuando la solución es degenerada ' +
@@ -236,14 +250,14 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
     const marginal = marginales[entrada.i][entrada.j]!;
     const negativas = ciclo.filter((_, k) => k % 2 === 1);
     const theta = Math.min(...negativas.map((c) => sol.x[c.i][c.j]));
-    const costoAntes = total(p, sol.x);
+    const costoAntes = fmtTotal(p, sol.x);
 
     pasos.push(
       foto({
         tipo: 'ciclo',
         titulo: `Iteración ${iteraciones}: entra ${nombreCelda(p, entrada)}`,
         explicacion:
-          `La celda ${nombreCelda(p, entrada)} tiene el costo marginal más negativo (${fmt(marginal)}). ` +
+          `La celda ${nombreCelda(p, entrada)} tiene el costo marginal más negativo (${fmtCosto(p, marginal)}). ` +
           `θ es el menor valor entre las celdas con signo −: min(${negativas.map((c) => fmt(sol.x[c.i][c.j])).join(', ')}) = ${fmt(theta)}. ` +
           'Se suma θ en las celdas + y se resta en las celdas −; así se conservan ofertas y demandas.',
         celda: entrada,
@@ -263,12 +277,12 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
     pasos.push(
       foto({
         tipo: 'pivoteo',
-        titulo: `Nueva solución: ${palabra} ${fmt(total(p, sol.x))}`,
+        titulo: `Nueva solución: ${palabra} ${fmtTotal(p, sol.x)}`,
         explicacion:
           `Sale de la base ${nombreCelda(p, salida)}, que quedó en 0. ` +
           (p.utilidades
-            ? `Nueva utilidad = ${fmt(costoAntes)} − θ·marginal = ${fmt(costoAntes)} − ${fmt(theta)}·(${fmt(marginal)}) = ${fmt(total(p, sol.x))}.`
-            : `Nuevo costo = ${fmt(costoAntes)} + θ·marginal = ${fmt(costoAntes)} + ${fmt(theta)}·(${fmt(marginal)}) = ${fmt(total(p, sol.x))}.`) +
+            ? `Nueva utilidad = ${costoAntes} − θ·marginal = ${costoAntes} − ${fmt(theta)}·(${fmtCosto(p, marginal)}) = ${fmtTotal(p, sol.x)}.`
+            : `Nuevo costo = ${costoAntes} + θ·marginal = ${costoAntes} + ${fmt(theta)}·(${fmtCosto(p, marginal)}) = ${fmtTotal(p, sol.x)}.`) +
           (theta === 0
             ? ` Como θ = 0 (degeneración), ${p.utilidades ? 'la utilidad' : 'el costo'} no cambia, pero la base sí.`
             : ''),

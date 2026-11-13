@@ -3,7 +3,17 @@ import { cantidadAsignable, celdasDisponibles, columnasActivas, construir, filas
 import type { EstadoConstruccion, Selector } from './constructivo';
 import { convertir } from './conversion';
 import type { Paso, Problema, Resultado } from './tipos';
-import { desgloseCosto, elegirMejor, fmt, matriz, nombreCelda, palabraTotal, prohibidasUsadas, total } from './util';
+import {
+  desgloseCosto,
+  elegirMejor,
+  fmtCosto,
+  fmtTotal,
+  matriz,
+  nombreCelda,
+  palabraTotal,
+  prohibidasUsadas,
+  total,
+} from './util';
 
 export type MetodoInicial = 'noroeste' | 'costoMinimo' | 'vogel';
 
@@ -29,7 +39,7 @@ export const selectorCostoMinimo: Selector = (e, p) => {
   return {
     celda,
     motivo:
-      `La celda disponible de menor costo es ${nombreCelda(p, celda)} con costo ${fmt(costo)}.` +
+      `La celda disponible de menor costo es ${nombreCelda(p, celda)} con costo ${fmtCosto(p, costo)}.` +
       (empates > 1 ? ` Hay ${empates} celdas empatadas; se elige la que permite asignar más unidades.` : ''),
   };
 };
@@ -84,13 +94,13 @@ export const selectorVogel: Selector = (e, p) => {
       explicacion:
         'Para cada fila y columna sin tachar se calcula su penalización: la diferencia entre sus dos costos más bajos. ' +
         'Indica cuánto se perdería si no se usara su celda más barata. ' +
-        `La mayor penalización es ${fmt(linea.penal)}, en la ${linea.tipo} ${nombreLinea}.` +
+        `La mayor penalización es ${fmtCosto(p, linea.penal)}, en la ${linea.tipo} ${nombreLinea}.` +
         (empatadas > 1 ? ` Hay ${empatadas} líneas empatadas; se elige la que contiene el menor costo.` : ''),
       penalFila,
       penalColumna,
       linea: { tipo: linea.tipo, k: linea.k },
     },
-    motivo: `En la ${linea.tipo} ${nombreLinea} (penalización ${fmt(linea.penal)}) la celda de menor costo es ${nombreCelda(p, celda)} con costo ${fmt(e.costos[celda.i][celda.j])}.`,
+    motivo: `En la ${linea.tipo} ${nombreLinea} (penalización ${fmtCosto(p, linea.penal)}) la celda de menor costo es ${nombreCelda(p, celda)} con costo ${fmtCosto(p, e.costos[celda.i][celda.j])}.`,
   };
 };
 
@@ -138,7 +148,7 @@ export function resolverInicial(original: Problema, selector: Selector, nombreMe
   pasos.push({
     ...ultimo,
     tipo: 'fin',
-    titulo: `Solución inicial: ${palabra} ${fmt(costo)}`,
+    titulo: `Solución inicial: ${palabra} ${fmtTotal(problema, solucion.x)}`,
     explicacion:
       `${nombreMetodo} terminó con ${m + n - 1} celdas básicas (m + n − 1). ` +
       `${problema.utilidades ? 'Utilidad total = Σ utilidad·x' : 'Costo total = Σ c·x'} = ${desgloseCosto(problema, solucion.x)}.` +

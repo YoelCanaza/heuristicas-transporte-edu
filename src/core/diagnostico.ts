@@ -1,6 +1,6 @@
 import type { MetodoInicial } from './metodos';
 import type { Celda, Paso, Problema } from './tipos';
-import { EPS, fmt, nombreCelda } from './util';
+import { EPS, fmt, fmtCosto, nombreCelda } from './util';
 
 /**
  * Retroalimentación del modo práctica: en lugar de decir solo "incorrecto", explica qué
@@ -26,7 +26,7 @@ function diagnosticoCostoMinimo(p: Problema, estado: Paso, correcta: Celda, eleg
 
   if (costo(elegida) === costo(correcta)) {
     return cantidad(elegida) < cantidad(correcta)
-      ? `Esa celda empata en costo (${fmt(costo(elegida))}), pero solo permite asignar ${fmt(cantidad(elegida))}. En un empate se elige la que permite asignar más unidades.`
+      ? `Esa celda empata en costo (${fmtCosto(p, costo(elegida))}), pero solo permite asignar ${fmt(cantidad(elegida))}. En un empate se elige la que permite asignar más unidades.`
       : `Esa celda empata en costo y en cantidad. El último desempate es el orden: la primera por fila y luego por columna.`;
   }
   const esquina = { i: estado.filaTachada!.indexOf(false), j: estado.columnaTachada!.indexOf(false) };
@@ -35,9 +35,9 @@ function diagnosticoCostoMinimo(p: Problema, estado: Paso, correcta: Celda, eleg
   }
   const minimoFila = Math.min(...libres.filter((c) => c.i === elegida.i).map(costo));
   if (costo(elegida) === minimoFila) {
-    return `Es la celda más barata de su fila (${fmt(costo(elegida))}), pero en otra fila hay una de costo menor. Se busca en toda la tabla disponible.`;
+    return `Es la celda más barata de su fila (${fmtCosto(p, costo(elegida))}), pero en otra fila hay una de costo menor. Se busca en toda la tabla disponible.`;
   }
-  return `Esa celda cuesta ${fmt(costo(elegida))} y hay celdas disponibles más baratas. Busca el menor costo entre todas las que no están tachadas.`;
+  return `Esa celda cuesta ${fmtCosto(p, costo(elegida))} y hay celdas disponibles más baratas. Busca el menor costo entre todas las que no están tachadas.`;
 }
 
 /**
@@ -85,17 +85,17 @@ export function diagnosticarAsignacion(
   if (enLinea) {
     return costo(elegida) === costo(correcta)
       ? `Vas en la línea correcta (${nombreLinea}) y esa celda empata en costo, pero en un empate se elige la que permite asignar más unidades.`
-      : `Vas en la línea correcta (${nombreLinea}, penalización ${fmt(penalMayor)}), pero dentro de ella se elige la celda de menor costo.`;
+      : `Vas en la línea correcta (${nombreLinea}, penalización ${fmtCosto(p, penalMayor)}), pero dentro de ella se elige la celda de menor costo.`;
   }
   const penalFila = analisis.penalFila![elegida.i]!;
   const penalColumna = analisis.penalColumna![elegida.j]!;
   if (Math.max(penalFila, penalColumna) === penalMayor) {
-    return `Esa celda está en una línea que empata con la mayor penalización (${fmt(penalMayor)}). El desempate es la línea que contiene el menor costo.`;
+    return `Esa celda está en una línea que empata con la mayor penalización (${fmtCosto(p, penalMayor)}). El desempate es la línea que contiene el menor costo.`;
   }
   if (costo(elegida) === costoMinimo) {
     return 'Elegiste la celda más barata de la tabla, como haría el Costo Mínimo. Vogel elige primero la fila o columna de mayor penalización (la diferencia entre sus dos menores costos).';
   }
-  return `La fila ${p.origenes[elegida.i]} tiene penalización ${fmt(penalFila)} y la columna ${p.destinos[elegida.j]}, ${fmt(penalColumna)}. Hay otra línea con una penalización mayor.`;
+  return `La fila ${p.origenes[elegida.i]} tiene penalización ${fmtCosto(p, penalFila)} y la columna ${p.destinos[elegida.j]}, ${fmtCosto(p, penalColumna)}. Hay otra línea con una penalización mayor.`;
 }
 
 /** Explica por qué `elegida` no es la celda que entra a la base. `marginales` son los del paso de entrada. */
@@ -112,16 +112,16 @@ export function diagnosticarEntrada(
   const m = marginales[elegida.i][elegida.j];
   if (m === null) return 'Esa celda no puede entrar a la base.';
   if (m > EPS) {
-    return `Enviar por ${nombreCelda(p, elegida)} aumentaría el costo: su costo marginal es +${fmt(m)}. Entra una celda de marginal negativo.`;
+    return `Enviar por ${nombreCelda(p, elegida)} aumentaría el costo: su costo marginal es +${fmtCosto(p, m)}. Entra una celda de marginal negativo.`;
   }
   if (Math.abs(m) <= EPS) {
     return `El costo marginal de ${nombreCelda(p, elegida)} es 0: usarla daría otra solución de igual costo, no una mejor.`;
   }
   const mejor = marginales[correcta.i][correcta.j]!;
   if (Math.abs(m - mejor) <= EPS) {
-    return `Esa celda empata con el marginal más negativo (${fmt(m)}). En un empate entra la primera por fila y luego por columna.`;
+    return `Esa celda empata con el marginal más negativo (${fmtCosto(p, m)}). En un empate entra la primera por fila y luego por columna.`;
   }
-  return `${nombreCelda(p, elegida)} también reduciría el costo (${fmt(m)} por unidad), pero el método elige la que más lo reduce: busca el marginal más negativo.`;
+  return `${nombreCelda(p, elegida)} también reduciría el costo (${fmtCosto(p, m)} por unidad), pero el método elige la que más lo reduce: busca el marginal más negativo.`;
 }
 
 export type ResultadoTrazo = { ok: true; completo: boolean } | { ok: false; motivo: string };

@@ -26,7 +26,10 @@ cómo se llega a un problema de minimización equivalente.
 - Las utilidades se cambian por su costo de oportunidad (la mayor utilidad menos la de la
   celda). El total que se muestra sigue siendo la utilidad real.
 - Las rutas prohibidas reciben el costo M, un número mayor que cualquier costo alcanzable.
+  La tabla y las explicaciones lo escriben con la letra: «M», «−M + 7», «5M + 290».
   Si no existe solución sin usarlas, la aplicación lo dice en lugar de declarar un óptimo.
+
+La página de Teoría explica ambas variantes, con sus pasos y errores frecuentes.
 
 ### Modo práctica
 
@@ -95,7 +98,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-71 pruebas automatizadas. Entre ellas:
+74 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.

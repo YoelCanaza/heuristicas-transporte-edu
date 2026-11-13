@@ -6,7 +6,7 @@ import { EJEMPLO_TAHA, crearAleatorio, generarProblema } from '../src/core/ejemp
 import { resolverMetodo } from '../src/core/metodos';
 import type { MetodoInicial } from '../src/core/metodos';
 import type { Problema } from '../src/core/tipos';
-import { prohibidasUsadas, suma } from '../src/core/util';
+import { fmtCosto, fmtTotal, prohibidasUsadas, suma } from '../src/core/util';
 import { esProblema, validar } from '../src/core/validacion';
 
 const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
@@ -75,6 +75,46 @@ describe('maximización de utilidades', () => {
     for (const s of pivoteos) expect(s.explicacion).toMatch(/Nueva utilidad = .* − θ·marginal/);
     const totales = final.pasos.map((s) => s.costoTotal);
     expect(totales).toEqual([...totales].sort((a, b) => a - b));
+  });
+});
+
+describe('formato con la letra M', () => {
+  const { problema } = convertir(prohibir(EJEMPLO_TAHA, [[0, 1]]));
+  const M = problema.M!;
+
+  it('escribe con M los valores que la contienen y deja igual los demás', () => {
+    expect(fmtCosto(problema, M)).toBe('M');
+    expect(fmtCosto(problema, M - 7)).toBe('M − 7');
+    expect(fmtCosto(problema, -M + 3)).toBe('−M + 3');
+    expect(fmtCosto(problema, 2 * M + 1.5)).toBe('2M + 1.5');
+    expect(fmtCosto(problema, 18)).toBe('18');
+    expect(fmtCosto(problema, -6)).toBe('-6');
+    expect(fmtCosto(EJEMPLO_TAHA, 1000)).toBe('1000');
+  });
+
+  it('el total solo usa M cuando la solución envía por una ruta prohibida', () => {
+    const x = EJEMPLO_TAHA.costos.map((fila) => fila.map(() => 0));
+    x[1][0] = 100; // costo 12 · 100 = 1200: un total grande que no debe confundirse con M
+    expect(fmtTotal(problema, x)).toBe('1200');
+    x[0][1] = 3;
+    expect(fmtTotal(problema, x)).toBe('3M + 1200');
+  });
+
+  it('ninguna explicación muestra el valor numérico de M, salvo el paso que lo define', () => {
+    for (const metodo of METODOS) {
+      const { inicial, final } = resolver(
+        prohibir(EJEMPLO_TAHA, [
+          [0, 0],
+          [1, 2],
+        ]),
+        metodo,
+      );
+      const detallado = optimizar(inicial.problema, inicial.solucion, { detallado: true });
+      const pasos = [...inicial.pasos, ...final.pasos, ...detallado.pasos].filter((s) => s.tipo !== 'conversion');
+      const cifras = new RegExp(`\\b${String(inicial.problema.M).slice(0, -1)}\\d\\b|\\b9{2}\\d\\b`);
+      for (const s of pasos) expect(`${s.titulo} ${s.explicacion}`).not.toMatch(cifras);
+      expect(pasos.some((s) => /\bM\b/.test(s.explicacion))).toBe(true);
+    }
   });
 });
 
@@ -180,6 +220,7 @@ describe('rutas prohibidas', () => {
   it('M supera a cualquier costo alcanzable y un problema ya convertido no se convierte otra vez', () => {
     expect(calcularM([20, 3], 65)).toBe(10000);
     expect(calcularM([1], 2)).toBe(1000);
+    expect(calcularM([400], 2)).toBe(10000);
     const { problema } = convertir(prohibir(EJEMPLO_TAHA, [[0, 0]]));
     expect(convertir(problema)).toEqual({ problema, explicacion: null });
     expect(convertir(EJEMPLO_TAHA).explicacion).toBeNull();

@@ -1,5 +1,5 @@
 import type { Celda, Paso, Problema } from '../core/tipos';
-import { fmt } from '../core/util';
+import { fmt, fmtCosto } from '../core/util';
 
 interface Props {
   problema: Problema;
@@ -67,7 +67,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                     {basica ? (
                       <span className="valor">{paso.x[i][j] === 0 ? 'ε' : fmt(paso.x[i][j])}</span>
                     ) : marginal != null ? (
-                      <span className={marginal < 0 ? 'marginal negativo' : 'marginal'}>{fmt(marginal)}</span>
+                      <span className={marginal < 0 ? 'marginal negativo' : 'marginal'}>{fmtCosto(p, marginal)}</span>
                     ) : puntaje != null ? (
                       <span className="marginal puntaje">{puntaje.toFixed(2)}</span>
                     ) : null}
@@ -86,7 +86,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
               </td>
               {conPenal && (
                 <td className={elegida('fila', i) ? 'penal elegida' : 'penal'}>
-                  {paso.penalFila![i] != null ? fmt(paso.penalFila![i]!) : ''}
+                  {paso.penalFila![i] != null ? fmtCosto(p, paso.penalFila![i]!) : ''}
                 </td>
               )}
             </tr>
@@ -106,7 +106,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
               <th className="etiqueta-fila">VALOR</th>
               {p.destinos.map((d, j) => (
                 <td key={d} className={elegida('columna', j) ? 'penal elegida' : 'penal'}>
-                  {paso.penalColumna![j] != null ? fmt(paso.penalColumna![j]!) : ''}
+                  {paso.penalColumna![j] != null ? fmtCosto(p, paso.penalColumna![j]!) : ''}
                 </td>
               ))}
               <td className="vacio" />

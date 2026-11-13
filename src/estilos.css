@@ -2104,3 +2104,7 @@ button.celda-ruta.prohibida {
   padding-bottom: 0;
   border-bottom: 0;
 }
+
+.titulo-bloque {
+  margin: 1rem 0 0;
+}

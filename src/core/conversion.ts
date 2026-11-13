@@ -10,7 +10,8 @@ export interface Conversion {
 
 /** Costo M: una potencia de 10 tan grande que ninguna solución que use una ruta prohibida puede ser mejor. */
 export function calcularM(costos: number[], flujo: number): number {
-  const cota = (Math.max(0, ...costos) + 1) * (flujo + 1);
+  // El factor mínimo de 20 garantiza que costos, penalizaciones y marginales sin M queden lejos de M.
+  const cota = (Math.max(0, ...costos) + 1) * Math.max(flujo + 1, 20);
   return Math.max(1000, 10 ** Math.ceil(Math.log10(cota)));
 }
 

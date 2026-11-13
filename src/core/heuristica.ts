@@ -1,7 +1,7 @@
 import { cantidadAsignable, celdasDisponibles, columnasActivas, filasActivas } from './constructivo';
 import type { EstadoConstruccion, Seleccion, Selector } from './constructivo';
 import type { Celda } from './tipos';
-import { elegirMejor, fmt, matriz, nombreCelda } from './util';
+import { elegirMejor, fmt, fmtCosto, matriz, nombreCelda } from './util';
 import { penalizacion } from './metodos';
 
 export type ModoSeleccion = 'celda' | 'linea' | 'puntaje';
@@ -241,7 +241,7 @@ function selectorPuntaje(c: ConfigHeuristica): Selector {
                   : ''),
               puntajes,
             },
-      motivo: `Según tu regla, la celda de mejor puntaje es ${nombreCelda(p, mejor.celda)} (puntaje ${fmt(mejor.puntaje)}, costo ${fmt(e.costos[mejor.celda.i][mejor.celda.j])}).`,
+      motivo: `Según tu regla, la celda de mejor puntaje es ${nombreCelda(p, mejor.celda)} (puntaje ${fmt(mejor.puntaje)}, costo ${fmtCosto(p, e.costos[mejor.celda.i][mejor.celda.j])}).`,
     };
   };
 }
@@ -268,13 +268,13 @@ export function selectorPersonalizado(c: ConfigHeuristica): Selector {
       const linea = elegirMejor(lineas, (l) => [-l.valor, l.minCosto]);
       const nombre = linea.tipo === 'fila' ? p.origenes[linea.k] : p.destinos[linea.k];
       candidatas = candidatas.filter((cel) => (linea.tipo === 'fila' ? cel.i : cel.j) === linea.k);
-      motivoLinea = `Según tu regla, la línea elegida es la ${linea.tipo} ${nombre} (valor ${fmt(linea.valor)}). `;
+      motivoLinea = `Según tu regla, la línea elegida es la ${linea.tipo} ${nombre} (valor ${fmtCosto(p, linea.valor)}). `;
 
       const penalFila: (number | null)[] = e.filaTachada.map(() => null);
       const penalColumna: (number | null)[] = e.columnaTachada.map(() => null);
       for (const l of lineas) (l.tipo === 'fila' ? penalFila : penalColumna)[l.k] = l.valor;
       analisis = {
-        explicacion: `Se calcula para cada fila y columna sin tachar el valor de "${ETIQUETA_LINEA[c.criterioLinea]}". Se elige la ${linea.tipo} ${nombre}, con el mayor valor (${fmt(linea.valor)}).`,
+        explicacion: `Se calcula para cada fila y columna sin tachar el valor de "${ETIQUETA_LINEA[c.criterioLinea]}". Se elige la ${linea.tipo} ${nombre}, con el mayor valor (${fmtCosto(p, linea.valor)}).`,
         penalFila,
         penalColumna,
         linea: { tipo: linea.tipo, k: linea.k },
@@ -288,7 +288,7 @@ export function selectorPersonalizado(c: ConfigHeuristica): Selector {
     return {
       celda,
       analisis,
-      motivo: `${motivoLinea}La celda elegida por "${ETIQUETA_CELDA[c.criterioCelda].toLowerCase()}" es ${nombreCelda(p, celda)} (costo ${fmt(e.costos[celda.i][celda.j])}).`,
+      motivo: `${motivoLinea}La celda elegida por "${ETIQUETA_CELDA[c.criterioCelda].toLowerCase()}" es ${nombreCelda(p, celda)} (costo ${fmtCosto(p, e.costos[celda.i][celda.j])}).`,
     };
   };
 }

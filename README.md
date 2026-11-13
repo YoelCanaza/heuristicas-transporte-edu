@@ -4,7 +4,7 @@ Software educativo web para aprender las heurísticas del Problema de Transporte
 (Esquina Noroeste, Costo Mínimo y Aproximación de Vogel), optimizar con el Camino de
 las Piedras y diseñar heurísticas propias.
 
-Versión actual: **0.3.0**. Funciona por completo en el navegador: no necesita servidor
+Versión actual: **0.4.0**. Funciona por completo en el navegador: no necesita servidor
 ni conexión a internet una vez cargado.
 
 ## Qué ofrece
@@ -14,7 +14,7 @@ ni conexión a internet una vez cargado.
 | Inicio      | Presentación y acceso directo a cada método.                                                                                                                                         |
 | Problema    | Editar costos, ofertas y demandas (de 2×2 a 8×8), cargar el ejemplo de Taha o generar un problema aleatorio. El problema se guarda en el navegador y se balancea solo si hace falta. |
 | Aprender    | Ver cada método paso a paso, con la explicación de cada decisión, y continuar con el Camino de las Piedras: camino cerrado, costo marginal, θ, celda que entra y celda que sale.     |
-| Laboratorio | Diseñar una heurística propia combinando criterios, ejecutarla paso a paso y compararla con los métodos clásicos y con el óptimo en cientos de problemas aleatorios reproducibles.   |
+| Laboratorio | Diseñar una heurística propia, ejecutarla paso a paso, plantear una hipótesis y ponerla a prueba contra los métodos clásicos y el óptimo en cientos de problemas reproducibles.      |
 | Teoría      | Idea, pasos, ventajas, limitaciones y errores frecuentes de cada método; convenciones de desempate que usa la aplicación; glosario.                                                  |
 
 ### Modo práctica
@@ -28,6 +28,23 @@ En la pantalla Aprender, el modo práctica convierte la demostración en ejercic
 - Cada error recibe un diagnóstico: la aplicación reconoce qué regla siguió el estudiante
   (por ejemplo, elegir la celda más barata en Esquina Noroeste) y explica la diferencia.
 - Hay dos pistas graduadas por ejercicio y un contador de ejercicios resueltos sin ayuda.
+
+### Laboratorio
+
+El laboratorio sigue los pasos de una pequeña investigación:
+
+- **Diseñar la regla.** Además de combinar criterios fijos, el estudiante puede dar un peso
+  de 0 a 10 a cuatro criterios (costo, costo relativo, urgencia de la línea y cantidad). La
+  tabla muestra el puntaje que su regla da a cada celda en cada iteración.
+- **Experimentar.** Elige la familia de problemas (costos al azar, geográficos,
+  desbalanceados o con muchos empates), el tamaño, la cantidad y la semilla. El cálculo
+  avanza por partes, con barra de progreso, sin congelar la pantalla.
+- **Analizar.** Brecha promedio, mediana y peor caso; distribución de las brechas por
+  tramos; duelos problema por problema contra cada método clásico; y el problema donde peor
+  le fue a su regla, que puede abrir para recorrerlo paso a paso.
+- **Bitácora.** Antes del experimento escribe su hipótesis y después su conclusión. Cada
+  intento queda guardado en el navegador, con un gráfico de su evolución, y la bitácora se
+  descarga como informe en Markdown.
 
 ## Uso
 
@@ -50,7 +67,8 @@ se pueden compartir enlaces directos.
   - `balanceo.ts`, `constructivo.ts`, `metodos.ts`: balanceo y las tres heurísticas, que
     comparten un mismo algoritmo constructivo y solo difieren en la regla que elige la celda;
   - `caminoPiedras.ts`: optimización, con manejo de la degeneración;
-  - `heuristica.ts`, `comparacion.ts`: heurística del usuario y experimento comparativo;
+  - `heuristica.ts`, `comparacion.ts`, `bitacora.ts`: heurística del usuario, experimento
+    comparativo y bitácora de intentos;
   - `diagnostico.ts`: diagnóstico de errores y validación del trazado en el modo práctica;
   - `validacion.ts`, `ejemplos.ts`, `tipos.ts`, `util.ts`.
 - `src/ui/` — componentes React: pantallas, tabla de transporte, reproductor de pasos,
@@ -65,7 +83,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-39 pruebas automatizadas. Entre ellas:
+60 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -73,6 +91,9 @@ permite probar toda la lógica sin interfaz.
   celdas básicas y el Camino de las Piedras llega al mismo óptimo desde las tres.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores y la validación del trazado del camino cerrado.
+- Las cuatro familias de problemas generan datos válidos y reproducibles; el puntaje con
+  solo el peso del costo reproduce el Costo Mínimo; el experimento por partes da el mismo
+  resultado que de una vez.
 
 ## Dependencias de terceros y licencias
 

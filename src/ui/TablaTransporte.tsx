@@ -39,6 +39,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                 const signo = signos.get(`${i},${j}`);
                 const basica = paso.basica[i][j];
                 const marginal = paso.marginales?.[i][j];
+                const puntaje = paso.puntajes?.[i][j];
                 const clases = [
                   'celda',
                   basica ? 'basica' : '',
@@ -59,6 +60,8 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                       <span className="valor">{paso.x[i][j] === 0 ? 'ε' : fmt(paso.x[i][j])}</span>
                     ) : marginal != null ? (
                       <span className={marginal < 0 ? 'marginal negativo' : 'marginal'}>{fmt(marginal)}</span>
+                    ) : puntaje != null ? (
+                      <span className="marginal puntaje">{puntaje.toFixed(2)}</span>
                     ) : null}
                     {onCeldaClick && (
                       <button
@@ -141,6 +144,7 @@ export function Leyenda({ paso }: { paso: Paso }) {
         </>
       )}
       {paso.marginales && <span>Número en celda vacía = costo marginal</span>}
+      {paso.puntajes && <span>Número en celda vacía = puntaje de tu regla (el menor gana)</span>}
       {paso.penalFila && (
         <span>
           <span className="muestra penal" />

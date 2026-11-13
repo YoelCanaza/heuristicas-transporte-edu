@@ -51,6 +51,8 @@ export interface Paso {
   penalColumna?: (number | null)[];
   /** Fila o columna elegida en el análisis (p. ej. la de mayor penalización en Vogel). */
   lineaElegida?: Linea;
+  /** Puntaje de cada celda disponible según la heurística del usuario (menor es mejor). */
+  puntajes?: (number | null)[][];
   /** Celda protagonista del paso (asignada, evaluada o que entra a la base). */
   celda?: Celda;
   /** Camino cerrado; los signos alternan +, −, +, … empezando por ciclo[0]. */

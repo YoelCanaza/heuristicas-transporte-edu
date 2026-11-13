@@ -163,7 +163,7 @@ export function App() {
       </main>
 
       <footer className="pie">
-        <span>HeurisTrans v0.3</span>
+        <span>HeurisTrans v0.4</span>
         <span>Problema de Transporte · Heurísticas constructivas y optimización</span>
       </footer>
     </div>

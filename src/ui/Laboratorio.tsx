@@ -1,36 +1,81 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  agregarEntrada,
+  brechaPropia,
+  crearEntrada,
+  describirProblemas,
+  esBitacora,
+  informeMarkdown,
+} from '../core/bitacora';
+import type { EntradaBitacora } from '../core/bitacora';
 import { optimizar } from '../core/caminoPiedras';
-import { comparar } from '../core/comparacion';
-import type { FilaComparacion, ResultadoComparacion } from '../core/comparacion';
+import { crearExperimento } from '../core/comparacion';
+import type { ResultadoComparacion } from '../core/comparacion';
+import { ETIQUETA_FAMILIA, ETIQUETA_TAMANO } from '../core/ejemplos';
+import type { Familia, Tamano } from '../core/ejemplos';
 import {
   CONFIG_INICIAL,
   ETIQUETA_CELDA,
   ETIQUETA_DESEMPATE,
   ETIQUETA_LINEA,
   ETIQUETA_MODO,
+  ETIQUETA_PESO,
+  PESOS_INICIALES,
   PRESETS,
   describir,
   equivalencia,
   selectorPersonalizado,
 } from '../core/heuristica';
-import type { ConfigHeuristica, CriterioCelda, CriterioLinea, Desempate, ModoSeleccion } from '../core/heuristica';
+import type {
+  ConfigHeuristica,
+  CriterioCelda,
+  CriterioLinea,
+  Desempate,
+  ModoSeleccion,
+  Pesos,
+} from '../core/heuristica';
 import { NOMBRE_METODO, SELECTOR, resolverInicial } from '../core/metodos';
 import type { MetodoInicial } from '../core/metodos';
 import type { Problema } from '../core/tipos';
 import { fmt } from '../core/util';
 import { Reproductor } from './Reproductor';
 import type { Fase } from './Reproductor';
+import { ResultadosExperimento } from './ResultadosExperimento';
 
 const CLAVE_GUARDADO = 'heuristrans.heuristica';
+const CLAVE_BITACORA = 'heuristrans.bitacora';
+const MAX_PROBLEMAS = 1000;
+/** Milisegundos de cálculo entre dos repintados de la barra de progreso. */
+const TROZO_MS = 30;
 
 function cargarConfig(): ConfigHeuristica {
   try {
-    const guardada = localStorage.getItem(CLAVE_GUARDADO);
-    if (guardada) return { ...CONFIG_INICIAL, ...JSON.parse(guardada) };
+    const guardada = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) ?? 'null') as Partial<ConfigHeuristica> | null;
+    if (guardada && typeof guardada === 'object')
+      return { ...CONFIG_INICIAL, ...guardada, pesos: { ...PESOS_INICIALES, ...guardada.pesos } };
   } catch {
-    // almacenamiento no disponible: se usa la configuración inicial
+    // almacenamiento no disponible o dato dañado: se usa la configuración inicial
   }
   return CONFIG_INICIAL;
+}
+
+function cargarBitacora(): EntradaBitacora[] {
+  try {
+    const guardada: unknown = JSON.parse(localStorage.getItem(CLAVE_BITACORA) ?? 'null');
+    if (esBitacora(guardada)) return guardada;
+  } catch {
+    // sin almacenamiento la bitácora empieza vacía
+  }
+  return [];
+}
+
+function descargar(nombre: string, texto: string) {
+  const url = URL.createObjectURL(new Blob([texto], { type: 'text/markdown;charset=utf-8' }));
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  enlace.click();
+  URL.revokeObjectURL(url);
 }
 
 function Opciones<T extends string>({
@@ -53,12 +98,31 @@ function Opciones<T extends string>({
   );
 }
 
+const TITULO_FAMILIA = Object.fromEntries(
+  (Object.keys(ETIQUETA_FAMILIA) as Familia[]).map((k) => [k, ETIQUETA_FAMILIA[k].titulo]),
+) as Record<Familia, string>;
+const ETIQUETA_TAMANO_LAB: Record<Tamano | 'variado', string> = {
+  variado: 'Variados (3–5 orígenes, 3–6 destinos)',
+  ...ETIQUETA_TAMANO,
+};
+
 export function Laboratorio({ problema }: { problema: Problema }) {
   const [config, setConfig] = useState<ConfigHeuristica>(cargarConfig);
   const [optimizarOn, setOptimizarOn] = useState(false);
-  const [instancias, setInstancias] = useState(100);
+  /** Problema del peor caso abierto desde los resultados; reemplaza al problema actual en la etapa 3. */
+  const [peorCaso, setPeorCaso] = useState<Problema | null>(null);
+  const [instancias, setInstancias] = useState(200);
   const [semilla, setSemilla] = useState(2026);
+  const [familia, setFamilia] = useState<Familia>('uniforme');
+  const [tamano, setTamano] = useState<Tamano | 'variado'>('variado');
+  const [hechas, setHechas] = useState<number | null>(null);
   const [resultado, setResultado] = useState<ResultadoComparacion | null>(null);
+  const [hipotesis, setHipotesis] = useState('');
+  const [conclusion, setConclusion] = useState('');
+  const [anotado, setAnotado] = useState(false);
+  const [bitacora, setBitacora] = useState<EntradaBitacora[]>(cargarBitacora);
+  const corrida = useRef(0);
+  const etapaPrueba = useRef<HTMLElement>(null);
 
   useEffect(() => {
     try {
@@ -68,24 +132,51 @@ export function Laboratorio({ problema }: { problema: Problema }) {
     }
   }, [config]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(CLAVE_BITACORA, JSON.stringify(bitacora));
+    } catch {
+      // sin almacenamiento la bitácora simplemente no se recuerda
+    }
+  }, [bitacora]);
+
+  // Al salir de la pantalla se abandona el experimento en curso.
+  useEffect(() => {
+    const actual = corrida;
+    return () => {
+      actual.current++;
+    };
+  }, []);
+
+  /** Descarta el experimento en curso y sus resultados: ya no corresponden a lo que hay en pantalla. */
+  const descartarExperimento = () => {
+    corrida.current++;
+    setHechas(null);
+    setResultado(null);
+    setAnotado(false);
+  };
+
   const actualizar = (cambio: Partial<ConfigHeuristica>) => {
     setConfig((c) => ({ ...c, ...cambio }));
-    setResultado(null);
+    descartarExperimento();
   };
+  const cambiarPeso = (k: keyof Pesos, valor: number) => actualizar({ pesos: { ...config.pesos, [k]: valor } });
 
   const equivale = equivalencia(config);
   const nombre = config.nombre.trim() || 'Mi heurística';
+  const problemaPrueba = peorCaso ?? problema;
+  const total = Math.max(1, Math.min(MAX_PROBLEMAS, Math.round(instancias) || 1));
 
-  const { balanceado, pasos, fases } = useMemo(() => {
-    const inicial = resolverInicial(problema, selectorPersonalizado(config), nombre);
+  const { balanceado, pasos, fases, costoInicial } = useMemo(() => {
+    const inicial = resolverInicial(problemaPrueba, selectorPersonalizado(config), nombre);
     const pasos = [...inicial.pasos];
     const fases: Fase[] = [{ desde: 0, etiqueta: `Construcción · ${nombre}`, tipo: 'construccion' }];
     if (optimizarOn) {
       fases.push({ desde: pasos.length, etiqueta: 'Optimización · Camino de las Piedras', tipo: 'optimizacion' });
       pasos.push(...optimizar(inicial.problema, inicial.solucion).pasos);
     }
-    return { balanceado: inicial.problema, pasos, fases };
-  }, [problema, config, nombre, optimizarOn]);
+    return { balanceado: inicial.problema, pasos, fases, costoInicial: inicial.costo };
+  }, [problemaPrueba, config, nombre, optimizarOn]);
 
   const ejecutarComparacion = () => {
     const clasicos = (['noroeste', 'costoMinimo', 'vogel'] as MetodoInicial[]).map((id) => ({
@@ -93,11 +184,45 @@ export function Laboratorio({ problema }: { problema: Problema }) {
       nombre: NOMBRE_METODO[id],
       selector: SELECTOR[id],
     }));
-    const n = Math.max(1, Math.min(1000, instancias));
-    setResultado(
-      comparar([{ id: 'propia', nombre, selector: selectorPersonalizado(config) }, ...clasicos], n, semilla),
+    const experimento = crearExperimento(
+      [{ id: 'propia', nombre, selector: selectorPersonalizado(config) }, ...clasicos],
+      total,
+      semilla,
+      { familia, tamano: tamano === 'variado' ? null : tamano },
     );
+    descartarExperimento();
+    const id = corrida.current;
+    setHechas(0);
+    // Se calcula por trozos para que la pantalla siga respondiendo y se vea el avance.
+    const continuar = () => {
+      if (corrida.current !== id) return;
+      if (experimento.avanzar(TROZO_MS)) {
+        setHechas(null);
+        setResultado(experimento.resultado());
+      } else {
+        setHechas(experimento.hechas());
+        setTimeout(continuar, 0);
+      }
+    };
+    setTimeout(continuar, 0);
   };
+
+  const abrirPeorCaso = () => {
+    if (!resultado?.peorCaso) return;
+    setPeorCaso(resultado.peorCaso.problema);
+    setOptimizarOn(true);
+    etapaPrueba.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const anotar = () => {
+    if (!resultado) return;
+    setBitacora((b) => agregarEntrada(b, crearEntrada(config, resultado, hipotesis, conclusion)));
+    setAnotado(true);
+    setHipotesis('');
+    setConclusion('');
+  };
+
+  const enCurso = hechas !== null;
 
   return (
     <section className="vista">
@@ -106,8 +231,8 @@ export function Laboratorio({ problema }: { problema: Problema }) {
           <p className="eyebrow">03 — Laboratorio</p>
           <h1>Diseña tu propia heurística</h1>
           <p className="vista-descripcion">
-            En cuatro etapas: reflexiona sobre los métodos clásicos, arma tu regla, pruébala y compárala con ellos en
-            cientos de problemas.
+            Trabaja como en una investigación: reflexiona sobre los métodos clásicos, arma tu regla, pruébala, plantea
+            una hipótesis y ponla a prueba en cientos de problemas.
           </p>
         </div>
       </header>
@@ -188,14 +313,16 @@ export function Laboratorio({ problema }: { problema: Problema }) {
               />
             </label>
           )}
-          <label>
-            Criterio para elegir la celda
-            <Opciones<CriterioCelda>
-              etiquetas={ETIQUETA_CELDA}
-              valor={config.criterioCelda}
-              onChange={(criterioCelda) => actualizar({ criterioCelda })}
-            />
-          </label>
+          {config.modo !== 'puntaje' && (
+            <label>
+              Criterio para elegir la celda
+              <Opciones<CriterioCelda>
+                etiquetas={ETIQUETA_CELDA}
+                valor={config.criterioCelda}
+                onChange={(criterioCelda) => actualizar({ criterioCelda })}
+              />
+            </label>
+          )}
           <label>
             Si hay empate, elegir…
             <Opciones<Desempate>
@@ -205,6 +332,32 @@ export function Laboratorio({ problema }: { problema: Problema }) {
             />
           </label>
         </div>
+
+        {config.modo === 'puntaje' && (
+          <div className="pesos">
+            <p className="ayuda">
+              Da a cada criterio una importancia de 0 (no se usa) a 10. En cada iteración gana la celda que mejor
+              combina los criterios según esos pesos. Lo que cuenta es la proporción entre ellos: 5 y 5 equivale a 10 y
+              10.
+            </p>
+            {(Object.keys(ETIQUETA_PESO) as (keyof Pesos)[]).map((k) => (
+              <label key={k} className="peso">
+                <span className="peso-titulo">{ETIQUETA_PESO[k].titulo}</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={config.pesos[k]}
+                  onChange={(e) => cambiarPeso(k, Number(e.target.value))}
+                />
+                <output>{config.pesos[k]}</output>
+                <span className="ayuda">{ETIQUETA_PESO[k].ayuda}</span>
+              </label>
+            ))}
+          </div>
+        )}
+
         <div className="barra">
           <span className="ayuda">Explora cómo se escriben los métodos clásicos con estos bloques:</span>
           {(Object.keys(PRESETS) as (keyof typeof PRESETS)[]).map((k) => (
@@ -223,16 +376,26 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         )}
       </article>
 
-      <article className="tarjeta etapa">
+      <article className="tarjeta etapa" ref={etapaPrueba}>
         <h2>
-          <span className="numero">3</span> Pruébala en el problema actual
+          <span className="numero">3</span> {peorCaso ? 'Pruébala en su peor caso' : 'Pruébala en el problema actual'}
         </h2>
+        {peorCaso && (
+          <div className="aviso aviso-accion">
+            <span>
+              Este es el problema del experimento donde peor le fue a tu regla: su solución inicial cuesta{' '}
+              <strong>{fmt(costoInicial)}</strong>. Sigue los pasos y busca la decisión que salió cara; la optimización
+              muestra después qué cambios la corrigen.
+            </span>
+            <button onClick={() => setPeorCaso(null)}>Volver al problema actual</button>
+          </div>
+        )}
         <label className="chip-check">
           <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
           Continuar con Camino de las Piedras
         </label>
         <Reproductor
-          key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problema)}`}
+          key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problemaPrueba)}`}
           problema={balanceado}
           pasos={pasos}
           fases={fases}
@@ -241,20 +404,56 @@ export function Laboratorio({ problema }: { problema: Problema }) {
 
       <article className="tarjeta etapa">
         <h2>
-          <span className="numero">4</span> Compárala
+          <span className="numero">4</span> Ponla a prueba
         </h2>
         <p className="ayuda">
-          Se generan problemas aleatorios (3–5 orígenes, 3–6 destinos, costos de 1 a 20). Cada uno se resuelve con tu
-          heurística y con los métodos clásicos; el óptimo se obtiene con el Camino de las Piedras. La misma semilla
-          produce siempre los mismos problemas.
+          Se generan problemas al azar de la familia que elijas. Cada uno se resuelve con tu heurística y con los tres
+          métodos clásicos; el óptimo se obtiene con el Camino de las Piedras. La misma semilla produce siempre los
+          mismos problemas, así que puedes repetir el experimento tras cambiar tu regla.
         </p>
+
+        <label className="campo-texto">
+          Tu hipótesis, antes de ver los datos
+          <textarea
+            rows={2}
+            value={hipotesis}
+            onChange={(e) => setHipotesis(e.target.value)}
+            placeholder="Por ejemplo: creo que dar peso a la urgencia mejorará a mi regla en los problemas desbalanceados, porque…"
+          />
+        </label>
+
+        <div className="formulario">
+          <label>
+            Familia de problemas
+            <Opciones<Familia>
+              etiquetas={TITULO_FAMILIA}
+              valor={familia}
+              onChange={(f) => {
+                setFamilia(f);
+                descartarExperimento();
+              }}
+            />
+            <span className="ayuda">{ETIQUETA_FAMILIA[familia].ayuda}</span>
+          </label>
+          <label>
+            Tamaño
+            <Opciones<Tamano | 'variado'>
+              etiquetas={ETIQUETA_TAMANO_LAB}
+              valor={tamano}
+              onChange={(t) => {
+                setTamano(t);
+                descartarExperimento();
+              }}
+            />
+          </label>
+        </div>
         <div className="barra">
           <label>
             Problemas
             <input
               type="number"
               min={1}
-              max={1000}
+              max={MAX_PROBLEMAS}
               value={instancias}
               onChange={(e) => setInstancias(Number(e.target.value))}
             />
@@ -263,82 +462,122 @@ export function Laboratorio({ problema }: { problema: Problema }) {
             Semilla
             <input type="number" value={semilla} onChange={(e) => setSemilla(Number(e.target.value))} />
           </label>
-          <button className="primario" onClick={ejecutarComparacion}>
-            Comparar
+          <button className="primario" onClick={ejecutarComparacion} disabled={enCurso}>
+            {enCurso ? 'Calculando…' : 'Ejecutar experimento'}
           </button>
+          {enCurso && <button onClick={descartarExperimento}>Cancelar</button>}
         </div>
-        {resultado && <ResultadosComparacion resultado={resultado} config={config} />}
+
+        {enCurso && (
+          <div className="progreso">
+            <progress value={hechas} max={total} aria-label="Avance del experimento" />
+            <span>
+              {hechas} de {total} problemas
+            </span>
+          </div>
+        )}
+
+        {resultado && (
+          <>
+            <ResultadosExperimento resultado={resultado} config={config} onAbrirPeorCaso={abrirPeorCaso} />
+            {anotado ? (
+              <p className="aviso ok">Intento anotado en la bitácora. Cambia tu regla y vuelve a experimentar.</p>
+            ) : (
+              <div className="cierre-experimento">
+                <label className="campo-texto">
+                  Tu conclusión: ¿se cumplió la hipótesis? ¿Por qué crees que ocurrió así?
+                  <textarea rows={2} value={conclusion} onChange={(e) => setConclusion(e.target.value)} />
+                </label>
+                <button className="secundario" onClick={anotar}>
+                  Anotar en la bitácora
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </article>
+
+      <article className="tarjeta etapa">
+        <h2>
+          <span className="numero">5</span> Bitácora
+        </h2>
+        {bitacora.length === 0 ? (
+          <p className="ayuda">
+            Aquí quedará el historial de tus intentos: la regla, tu hipótesis, el resultado y tu conclusión. Ejecuta un
+            experimento y anótalo para empezar.
+          </p>
+        ) : (
+          <>
+            <Evolucion bitacora={bitacora} />
+            <ol className="bitacora" reversed>
+              {bitacora.map((e) => (
+                <li key={e.id}>
+                  <div className="bitacora-cabecera">
+                    <strong>{e.nombre}</strong>
+                    <span className="bitacora-brecha">
+                      {fmt(brechaPropia(e))} % · puesto {e.puesto} de {e.competidores}
+                    </span>
+                    <button
+                      className="boton-texto"
+                      onClick={() => setBitacora((b) => b.filter((x) => x.id !== e.id))}
+                      aria-label={`Borrar el intento ${e.nombre} de la bitácora`}
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                  <p className="ayuda">
+                    {new Date(e.fecha).toLocaleString('es')} · {describirProblemas(e)}
+                  </p>
+                  <p>{e.regla}</p>
+                  <p>
+                    <strong>Hipótesis:</strong> {e.hipotesis || <span className="ayuda">sin hipótesis</span>}
+                  </p>
+                  <p>
+                    <strong>Conclusión:</strong> {e.conclusion || <span className="ayuda">sin conclusión</span>}
+                  </p>
+                </li>
+              ))}
+            </ol>
+            <div className="barra">
+              <button onClick={() => descargar('bitacora-heuristrans.md', informeMarkdown(bitacora))}>
+                Descargar informe (.md)
+              </button>
+            </div>
+          </>
+        )}
       </article>
     </section>
   );
 }
 
-function ResultadosComparacion({ resultado, config }: { resultado: ResultadoComparacion; config: ConfigHeuristica }) {
-  const filas = [...resultado.filas].sort((a, b) => a.brechaPromedio - b.brechaPromedio);
-  const maxBrecha = Math.max(...filas.map((f) => f.brechaPromedio), 1);
-  const pct = (v: number) => `${fmt((v / resultado.instancias) * 100)} %`;
-
+/** Brecha de la heurística propia en cada intento, del más antiguo al más reciente. */
+function Evolucion({ bitacora }: { bitacora: EntradaBitacora[] }) {
+  if (bitacora.length < 2) return null;
+  const intentos = [...bitacora].reverse();
+  const max = Math.max(...intentos.map(brechaPropia), 1);
+  const mejor = Math.min(...intentos.map(brechaPropia));
   return (
-    <>
-      <div className="tabla-contenedor">
-        <table className="tabla-simple resultados">
-          <thead>
-            <tr>
-              <th>Heurística</th>
-              <th>Brecha promedio vs. óptimo</th>
-              <th>Costo promedio</th>
-              <th>Alcanza el óptimo</th>
-              <th>Mejor solución inicial</th>
-              <th>Iteraciones hasta el óptimo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filas.map((f) => (
-              <tr key={f.id} className={f.id === 'propia' ? 'propia' : ''}>
-                <td>{f.nombre}</td>
-                <td>
-                  <div className={f.id === 'propia' ? 'barra-dato propia' : 'barra-dato'}>
-                    <span style={{ width: `${(f.brechaPromedio / maxBrecha) * 100}%` }} />
-                    <em>{fmt(f.brechaPromedio)} %</em>
-                  </div>
-                </td>
-                <td>{fmt(f.costoPromedio)}</td>
-                <td>{pct(f.vecesOptimo)}</td>
-                <td>{pct(f.vecesMejor)}</td>
-                <td>{fmt(f.iteracionesPromedio)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="interpretacion">{interpretar(filas, config)}</p>
-    </>
+    <div className="evolucion">
+      <h3>Brecha promedio de tu heurística, intento a intento</h3>
+      <ol>
+        {intentos.map((e, k) => {
+          const brecha = brechaPropia(e);
+          return (
+            <li key={e.id} title={`${e.nombre}: ${describirProblemas(e)}`}>
+              <span className="evolucion-numero">{k + 1}</span>
+              <div className={brecha <= mejor + 1e-9 ? 'barra-dato propia' : 'barra-dato'}>
+                <span style={{ width: `${(brecha / max) * 100}%` }} />
+                <em>{fmt(brecha)} %</em>
+              </div>
+              <span className="evolucion-nombre">{e.nombre}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="ayuda">
+        La barra azul marca tu mejor intento. Solo son comparables los intentos hechos con la misma familia, tamaño y
+        semilla.
+      </p>
+    </div>
   );
-}
-
-function interpretar(filas: FilaComparacion[], config: ConfigHeuristica): string {
-  const propia = filas.find((f) => f.id === 'propia')!;
-  const vogel = filas.find((f) => f.id === 'vogel')!;
-  const minimo = filas.find((f) => f.id === 'costoMinimo')!;
-  const puesto = filas.indexOf(propia) + 1;
-  const partes = [
-    `Tu heurística quedó en el puesto ${puesto} de ${filas.length} por brecha promedio (${fmt(propia.brechaPromedio)} %).`,
-  ];
-
-  const diferencia = propia.brechaPromedio - vogel.brechaPromedio;
-  if (diferencia < -0.05) partes.push(`¡Supera a Vogel en ${fmt(-diferencia)} puntos porcentuales en promedio!`);
-  else if (diferencia <= 0.05) partes.push('Rinde prácticamente igual que Vogel.');
-  else if (propia.brechaPromedio < minimo.brechaPromedio)
-    partes.push('Mejora al Costo Mínimo, pero Vogel todavía es mejor.');
-  else partes.push('Todavía no supera al Costo Mínimo.');
-
-  if (config.criterioCelda === 'noroeste') partes.push('Pista: tu regla elige la celda sin mirar los costos.');
-  else if (config.modo === 'celda' && config.criterioCelda === 'menorCosto')
-    partes.push(
-      'Pista: elegir siempre la celda más barata es miope; prueba a medir la urgencia de cada fila o columna.',
-    );
-  else if (config.criterioCelda === 'mayorCantidad')
-    partes.push('Pista: mover muchas unidades no sirve de mucho si la ruta es cara; combina la cantidad con el costo.');
-
-  return partes.join(' ');
 }

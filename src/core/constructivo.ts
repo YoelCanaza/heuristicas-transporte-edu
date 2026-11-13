@@ -19,6 +19,7 @@ export interface Seleccion {
     penalFila?: (number | null)[];
     penalColumna?: (number | null)[];
     linea?: Linea;
+    puntajes?: (number | null)[][];
   };
 }
 
@@ -79,6 +80,7 @@ export function construir(p: Problema, selector: Selector): { solucion: Solucion
           penalFila: sel.analisis.penalFila,
           penalColumna: sel.analisis.penalColumna,
           lineaElegida: sel.analisis.linea,
+          puntajes: sel.analisis.puntajes,
         }),
       );
     }

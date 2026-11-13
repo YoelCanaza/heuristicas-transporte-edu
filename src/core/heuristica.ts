@@ -1,10 +1,18 @@
 import { cantidadAsignable, celdasDisponibles, columnasActivas, filasActivas } from './constructivo';
 import type { EstadoConstruccion, Seleccion, Selector } from './constructivo';
 import type { Celda } from './tipos';
-import { elegirMejor, fmt, nombreCelda } from './util';
+import { elegirMejor, fmt, matriz, nombreCelda } from './util';
 import { penalizacion } from './metodos';
 
-export type ModoSeleccion = 'celda' | 'linea';
+export type ModoSeleccion = 'celda' | 'linea' | 'puntaje';
+
+/** Importancia (0 a 10) de cada criterio en el modo de puntaje. */
+export interface Pesos {
+  costo: number;
+  relativo: number;
+  urgencia: number;
+  cantidad: number;
+}
 export type CriterioLinea = 'penalizacion' | 'rango' | 'mayorCantidad' | 'menorCostoMinimo';
 export type CriterioCelda = 'noroeste' | 'menorCosto' | 'menorCostoRelativo' | 'mayorCantidad';
 export type Desempate = 'mayorCantidad' | 'menorCosto' | 'orden';
@@ -15,12 +23,29 @@ export interface ConfigHeuristica {
   criterioLinea: CriterioLinea;
   criterioCelda: CriterioCelda;
   desempate: Desempate;
+  pesos: Pesos;
 }
 
 export const ETIQUETA_MODO: Record<ModoSeleccion, string> = {
   celda: 'Elegir directamente la celda',
   linea: 'Elegir primero una fila o columna y luego la celda',
+  puntaje: 'Combinar varios criterios con pesos (puntaje)',
 };
+
+export const ETIQUETA_PESO: Record<keyof Pesos, { titulo: string; ayuda: string }> = {
+  costo: { titulo: 'Costo bajo', ayuda: 'Prefiere las celdas más baratas de la tabla.' },
+  relativo: {
+    titulo: 'Costo relativo bajo',
+    ayuda: 'Prefiere las celdas baratas en comparación con lo mejor de su fila y de su columna.',
+  },
+  urgencia: {
+    titulo: 'Urgencia de la línea',
+    ayuda: 'Prefiere las celdas de la fila o columna con mayor penalización, como hace Vogel.',
+  },
+  cantidad: { titulo: 'Cantidad grande', ayuda: 'Prefiere las celdas que permiten mover más unidades.' },
+};
+
+export const PESOS_INICIALES: Pesos = { costo: 5, relativo: 0, urgencia: 5, cantidad: 0 };
 
 export const ETIQUETA_LINEA: Record<CriterioLinea, string> = {
   penalizacion: 'Mayor penalización (diferencia entre sus dos menores costos)',
@@ -49,6 +74,7 @@ export const PRESETS: Record<'noroeste' | 'costoMinimo' | 'vogel', ConfigHeurist
     criterioLinea: 'penalizacion',
     criterioCelda: 'noroeste',
     desempate: 'orden',
+    pesos: PESOS_INICIALES,
   },
   costoMinimo: {
     nombre: 'Costo Mínimo',
@@ -56,6 +82,7 @@ export const PRESETS: Record<'noroeste' | 'costoMinimo' | 'vogel', ConfigHeurist
     criterioLinea: 'penalizacion',
     criterioCelda: 'menorCosto',
     desempate: 'mayorCantidad',
+    pesos: PESOS_INICIALES,
   },
   vogel: {
     nombre: 'Vogel',
@@ -63,6 +90,7 @@ export const PRESETS: Record<'noroeste' | 'costoMinimo' | 'vogel', ConfigHeurist
     criterioLinea: 'penalizacion',
     criterioCelda: 'menorCosto',
     desempate: 'mayorCantidad',
+    pesos: PESOS_INICIALES,
   },
 };
 
@@ -72,10 +100,21 @@ export const CONFIG_INICIAL: ConfigHeuristica = {
   criterioLinea: 'rango',
   criterioCelda: 'menorCostoRelativo',
   desempate: 'mayorCantidad',
+  pesos: PESOS_INICIALES,
 };
+
+const CLAVES_PESO = ['costo', 'relativo', 'urgencia', 'cantidad'] as const;
+
+function pesosActivos(c: ConfigHeuristica): (keyof Pesos)[] {
+  return CLAVES_PESO.filter((k) => c.pesos[k] > 0);
+}
 
 /** Indica a qué método clásico equivale la configuración, si a alguno. */
 export function equivalencia(c: ConfigHeuristica): string | null {
+  if (c.modo === 'puntaje') {
+    const activos = pesosActivos(c);
+    return activos.length === 1 && activos[0] === 'costo' && c.desempate === 'mayorCantidad' ? 'Costo Mínimo' : null;
+  }
   if (c.modo === 'celda' && c.criterioCelda === 'noroeste') return 'Esquina Noroeste';
   if (c.modo === 'celda' && c.criterioCelda === 'menorCosto' && c.desempate === 'mayorCantidad') return 'Costo Mínimo';
   if (
@@ -91,6 +130,13 @@ export function equivalencia(c: ConfigHeuristica): string | null {
 export function describir(c: ConfigHeuristica): string {
   const celda = ETIQUETA_CELDA[c.criterioCelda].toLowerCase();
   const desempate = ETIQUETA_DESEMPATE[c.desempate].toLowerCase();
+  if (c.modo === 'puntaje') {
+    const activos = pesosActivos(c);
+    const criterios = activos.map((k) => `${ETIQUETA_PESO[k].titulo.toLowerCase()} (peso ${c.pesos[k]})`).join(', ');
+    return activos.length === 0
+      ? `Todos los pesos están en 0, así que en cada iteración decide solo el desempate: ${desempate}.`
+      : `En cada iteración: dar a cada celda disponible un puntaje que combina ${criterios}; elegir la de mejor puntaje (empate: ${desempate}); asignarle lo máximo posible y tachar la línea agotada. Repetir hasta tachar todo.`;
+  }
   const pasoSeleccion =
     c.modo === 'celda'
       ? `elegir, entre todas las celdas disponibles, la de criterio "${celda}" (empate: ${desempate})`
@@ -137,7 +183,71 @@ function valorLinea(e: EstadoConstruccion, criterio: CriterioLinea, tipo: 'fila'
   }
 }
 
+/** Diferencia entre los dos menores costos; 0 si la línea ya no tiene alternativa. */
+function urgencia(costos: number[]): number {
+  return costos.length >= 2 ? penalizacion(costos) : 0;
+}
+
+/**
+ * Puntaje de cada celda disponible, entre 0 (la mejor en todos los criterios activos) y 1 (la peor).
+ * Cada criterio se normaliza entre las celdas disponibles para que los pesos sean comparables.
+ */
+export function calcularPuntajes(e: EstadoConstruccion, pesos: Pesos): { celda: Celda; puntaje: number }[] {
+  const celdas = celdasDisponibles(e);
+  const urgFila = new Map(filasActivas(e).map((i) => [i, urgencia(costosDisponiblesFila(e, i))]));
+  const urgColumna = new Map(columnasActivas(e).map((j) => [j, urgencia(costosDisponiblesColumna(e, j))]));
+  // Valores "cuanto menor, mejor" de cada criterio.
+  const crudos: Record<keyof Pesos, number[]> = {
+    costo: celdas.map((c) => e.costos[c.i][c.j]),
+    relativo: celdas.map((c) => valorCelda(e, 'menorCostoRelativo', c)),
+    urgencia: celdas.map((c) => -Math.max(urgFila.get(c.i)!, urgColumna.get(c.j)!)),
+    cantidad: celdas.map((c) => -cantidadAsignable(e, c)),
+  };
+  const total = CLAVES_PESO.reduce((t, k) => t + pesos[k], 0);
+  return celdas.map((celda, n) => {
+    let puntaje = 0;
+    for (const k of CLAVES_PESO) {
+      if (pesos[k] === 0) continue;
+      const min = Math.min(...crudos[k]);
+      const max = Math.max(...crudos[k]);
+      puntaje += (pesos[k] / total) * (max > min ? (crudos[k][n] - min) / (max - min) : 0);
+    }
+    return { celda, puntaje };
+  });
+}
+
+function selectorPuntaje(c: ConfigHeuristica): Selector {
+  return (e, p) => {
+    const evaluadas = calcularPuntajes(e, c.pesos);
+    const mejor = elegirMejor(evaluadas, (x) => [x.puntaje, valorCelda(e, c.desempate, x.celda)]);
+    const empatadas = evaluadas.filter((x) => Math.abs(x.puntaje - mejor.puntaje) < 1e-9).length;
+    const puntajes = matriz<number | null>(e.oferta.length, e.demanda.length, null);
+    for (const x of evaluadas) puntajes[x.celda.i][x.celda.j] = x.puntaje;
+    const activos = pesosActivos(c);
+    return {
+      celda: mejor.celda,
+      analisis:
+        activos.length === 0
+          ? undefined
+          : {
+              explicacion:
+                `Se calcula el puntaje de cada celda disponible combinando ${activos
+                  .map((k) => `${ETIQUETA_PESO[k].titulo.toLowerCase()} (peso ${c.pesos[k]})`)
+                  .join(', ')}. ` +
+                'El puntaje va de 0 (la mejor en todo) a 1 (la peor en todo). ' +
+                `El menor es ${fmt(mejor.puntaje)}, en ${nombreCelda(p, mejor.celda)}.` +
+                (empatadas > 1
+                  ? ` Hay ${empatadas} celdas empatadas; decide el desempate: ${ETIQUETA_DESEMPATE[c.desempate].toLowerCase()}.`
+                  : ''),
+              puntajes,
+            },
+      motivo: `Según tu regla, la celda de mejor puntaje es ${nombreCelda(p, mejor.celda)} (puntaje ${fmt(mejor.puntaje)}, costo ${fmt(e.costos[mejor.celda.i][mejor.celda.j])}).`,
+    };
+  };
+}
+
 export function selectorPersonalizado(c: ConfigHeuristica): Selector {
+  if (c.modo === 'puntaje') return selectorPuntaje(c);
   return (e, p) => {
     const filas = filasActivas(e);
     const cols = columnasActivas(e);

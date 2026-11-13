@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
 
-export type Vista = 'inicio' | 'problema' | 'aprender' | 'laboratorio' | 'teoria';
+export type Vista = 'inicio' | 'problema' | 'aprender' | 'comparar' | 'laboratorio' | 'teoria';
 
 export interface Ruta {
   vista: Vista;
@@ -11,7 +11,7 @@ export interface Ruta {
   optimizador: Optimizador;
 }
 
-const VISTAS: Vista[] = ['inicio', 'problema', 'aprender', 'laboratorio', 'teoria'];
+const VISTAS: Vista[] = ['inicio', 'problema', 'aprender', 'comparar', 'laboratorio', 'teoria'];
 const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
 
 /** Interpreta direcciones como `#/aprender/vogel` o `#/aprender/vogel/modi`; lo desconocido cae en el inicio. */

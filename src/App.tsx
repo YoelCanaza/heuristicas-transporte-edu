@@ -3,6 +3,7 @@ import { EJEMPLO_TAHA } from './core/ejemplos';
 import type { Problema } from './core/tipos';
 import { esProblema, validar } from './core/validacion';
 import { Aprender } from './ui/Aprender';
+import { Comparar } from './ui/Comparar';
 import { EditorProblema } from './ui/EditorProblema';
 import { Inicio } from './ui/Inicio';
 import { Laboratorio } from './ui/Laboratorio';
@@ -16,6 +17,7 @@ const VISTAS: { id: Vista; etiqueta: string }[] = [
   { id: 'inicio', etiqueta: 'Inicio' },
   { id: 'problema', etiqueta: 'Problema' },
   { id: 'aprender', etiqueta: 'Aprender' },
+  { id: 'comparar', etiqueta: 'Comparar' },
   { id: 'laboratorio', etiqueta: 'Laboratorio' },
   { id: 'teoria', etiqueta: 'Teoría' },
 ];
@@ -149,7 +151,7 @@ export function App() {
         {vista === 'teoria' && (
           <Teoria onPractica={(metodo, optimizador) => ir({ vista: 'aprender', metodo, optimizador })} />
         )}
-        {(vista === 'aprender' || vista === 'laboratorio') &&
+        {(vista === 'aprender' || vista === 'comparar' || vista === 'laboratorio') &&
           (valido ? (
             vista === 'aprender' ? (
               <Aprender
@@ -159,6 +161,8 @@ export function App() {
                 onMetodo={(metodo) => ir({ metodo })}
                 onOptimizador={(optimizador) => ir({ optimizador })}
               />
+            ) : vista === 'comparar' ? (
+              <Comparar problema={problema} onMetodo={(metodo) => ir({ vista: 'aprender', metodo })} />
             ) : (
               <Laboratorio problema={problema} />
             )

@@ -21,6 +21,10 @@
   --ambar-suave: #fcefd9;
   --pendiente: #dde2ec;
   --sombra: rgba(14, 26, 58, 0.1);
+  /* Series del gráfico comparativo: Esquina Noroeste, Costo Mínimo y Vogel (paleta validada para daltonismo). */
+  --serie-0: #d9442f;
+  --serie-1: #2449c9;
+  --serie-2: #e39a2d;
 
   --fuente-titulo: 'Unbounded', system-ui, sans-serif;
   --fuente: 'Manrope', system-ui, sans-serif;
@@ -52,6 +56,9 @@
   --ambar-suave: #3a2c12;
   --pendiente: #2a3556;
   --sombra: rgba(0, 0, 0, 0.4);
+  --serie-0: #e0503a;
+  --serie-1: #5b7cf5;
+  --serie-2: #b08c2a;
   --fondo-cabecera: rgba(10, 16, 36, 0.85);
   color-scheme: dark;
 }
@@ -2128,4 +2135,279 @@ button.celda-ruta.prohibida {
 .etiqueta-potenciales {
   background: var(--azul-suave);
   color: var(--azul);
+}
+
+/* ───────── Comparar ───────── */
+.cifra-optimo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.cifra-optimo strong {
+  font-family: var(--fuente-titulo);
+  font-size: 2.4rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.comparar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.25rem;
+}
+
+.metodo-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.metodo-tarjeta h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.metodo-tarjeta .ayuda {
+  margin: 0;
+}
+
+.metodo-tarjeta button {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+}
+
+.cifras dt {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+
+.cifras dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-mini {
+  border-collapse: separate;
+  border-spacing: 3px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-mini th {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--apagado);
+}
+
+.tabla-mini td {
+  min-width: 2.4rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: 8px;
+  text-align: center;
+  color: var(--apagado);
+  background: var(--superficie-2);
+}
+
+.tabla-mini td.basica {
+  background: var(--azul-suave);
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.tabla-mini td.prohibida {
+  background: var(--coral-suave);
+}
+
+.marca-serie {
+  stroke: var(--superficie);
+  stroke-width: 2;
+  paint-order: stroke;
+}
+
+.marca-serie.suelta {
+  flex: none;
+  overflow: visible;
+  stroke: none;
+}
+
+.serie-0 {
+  fill: var(--serie-0);
+  stroke: var(--serie-0);
+}
+
+.serie-1 {
+  fill: var(--serie-1);
+  stroke: var(--serie-1);
+}
+
+.serie-2 {
+  fill: var(--serie-2);
+  stroke: var(--serie-2);
+}
+
+g.marca-serie {
+  stroke: var(--superficie);
+}
+
+.grafico-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  color: var(--tinta-suave);
+}
+
+.grafico-leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.muestra-optimo {
+  width: 18px;
+  border-top: 2px dashed var(--apagado);
+}
+
+.grafico-lienzo {
+  position: relative;
+}
+
+.grafico-lienzo > svg {
+  display: block;
+  max-width: 100%;
+}
+
+.grafico-rejilla {
+  stroke: var(--linea);
+  stroke-width: 1;
+}
+
+.grafico-base {
+  stroke: var(--apagado);
+  stroke-width: 1;
+}
+
+.grafico-eje {
+  fill: var(--apagado);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico-eje.fuerte {
+  font-weight: 700;
+}
+
+.grafico-etiqueta {
+  fill: var(--tinta);
+  font-size: 12.5px;
+  font-weight: 700;
+  stroke: var(--superficie);
+  stroke-width: 4;
+  paint-order: stroke;
+}
+
+.grafico-optimo {
+  stroke: var(--apagado);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.grafico-linea {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.grafico-linea.repetida {
+  stroke-dasharray: 7 7;
+  stroke-linecap: butt;
+}
+
+.grafico-cursor {
+  stroke: var(--apagado);
+  stroke-width: 1;
+}
+
+.grafico-zona {
+  fill: transparent;
+}
+
+.grafico-tooltip {
+  position: absolute;
+  top: 4px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-left: 12px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-sm);
+  background: var(--superficie);
+  box-shadow: 0 6px 20px var(--sombra);
+  font-size: 0.84rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.grafico-tooltip.a-la-izquierda {
+  margin-left: -12px;
+  transform: translateX(-100%);
+}
+
+/* En pantallas angostas el detalle va debajo del gráfico, a todo el ancho. */
+.grafico-tooltip.debajo {
+  position: static;
+  margin: 0.5rem 0 0;
+  white-space: normal;
+  box-shadow: none;
+}
+
+.grafico-tooltip span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.grafico-tooltip b {
+  margin-left: auto;
+  padding-left: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico-tooltip em {
+  font-style: normal;
+  color: var(--apagado);
+}
+
+.datos-grafico {
+  margin-top: 1rem;
+}
+
+.datos-grafico summary {
+  cursor: pointer;
+  font-weight: 700;
 }

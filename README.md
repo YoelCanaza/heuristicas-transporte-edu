@@ -14,6 +14,7 @@ ni conexión a internet una vez cargado.
 | Inicio      | Presentación y acceso directo a cada método.                                                                                                                                                                           |
 | Problema    | Editar costos, ofertas y demandas (de 2×2 a 8×8), cargar el ejemplo de Taha o generar un problema aleatorio. El problema se guarda en el navegador y se balancea solo si hace falta.                                   |
 | Aprender    | Ver cada método paso a paso, con la explicación de cada decisión, y continuar con la optimización, por el Camino de las Piedras o por MODI (u-v): costo marginal, camino cerrado, θ, celda que entra y celda que sale. |
+| Comparar    | El mismo problema resuelto con las tres heurísticas: costo inicial, brecha respecto del óptimo, iteraciones necesarias y un gráfico del costo después de cada iteración.                                               |
 | Laboratorio | Diseñar una heurística propia, ejecutarla paso a paso, plantear una hipótesis y ponerla a prueba contra los métodos clásicos y el óptimo en cientos de problemas reproducibles.                                        |
 | Teoría      | Idea, pasos, ventajas, limitaciones y errores frecuentes de cada método; convenciones de desempate que usa la aplicación; glosario.                                                                                    |
 
@@ -83,6 +84,7 @@ se pueden compartir enlaces directos.
     comparten un mismo algoritmo constructivo y solo difieren en la regla que elige la celda;
   - `caminoPiedras.ts`: optimización, con manejo de la degeneración;
   - `modi.ts`: valores u y v del método MODI, la otra forma de obtener los costos marginales;
+  - `comparador.ts`: las tres heurísticas sobre un mismo problema, con el costo tras cada iteración;
   - `conversion.ts`: maximización (costos de oportunidad) y rutas prohibidas (costo M);
   - `heuristica.ts`, `comparacion.ts`, `bitacora.ts`: heurística del usuario, experimento
     comparativo y bitácora de intentos;
@@ -100,7 +102,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-87 pruebas automatizadas. Entre ellas:
+96 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -108,6 +110,8 @@ permite probar toda la lógica sin interfaz.
   celdas básicas y el Camino de las Piedras llega al mismo óptimo desde las tres.
 - MODI y el Camino de las Piedras calculan los mismos costos marginales, recorren las mismas
   soluciones y llegan al mismo óptimo: dos cálculos distintos que se verifican entre sí.
+- El comparador: los recorridos del ejemplo de Taha (520 → 475 → 475 → 435 desde Esquina
+  Noroeste), que el costo nunca sube entre iteraciones y los avisos con rutas prohibidas.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores y la validación del trazado del camino cerrado.
 - Maximización: un caso 2×2 resuelto a mano y, en problemas aleatorios, la misma utilidad

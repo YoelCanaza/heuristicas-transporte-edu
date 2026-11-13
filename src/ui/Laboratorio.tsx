@@ -228,7 +228,7 @@ export function Laboratorio({ problema }: { problema: Problema }) {
     <section className="vista">
       <header className="vista-cabecera">
         <div>
-          <p className="eyebrow">03 — Laboratorio</p>
+          <p className="eyebrow">04 — Laboratorio</p>
           <h1>Diseña tu propia heurística</h1>
           <p className="vista-descripcion">
             Trabaja como en una investigación: reflexiona sobre los métodos clásicos, arma tu regla, pruébala, plantea

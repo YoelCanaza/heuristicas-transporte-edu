@@ -9,7 +9,7 @@ export interface Teoria {
   errores: string[];
 }
 
-export type TemaTeoria = 'noroeste' | 'costoMinimo' | 'vogel' | 'piedras';
+export type TemaTeoria = 'noroeste' | 'costoMinimo' | 'vogel' | 'piedras' | 'modi';
 
 export const TEORIA: Record<TemaTeoria, Teoria> = {
   noroeste: {
@@ -91,6 +91,31 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
     errores: [
       'Usar una celda vacía como esquina del camino: solo se puede girar en celdas básicas.',
       'Tomar θ como la menor asignación de todo el camino, en lugar de solo entre las celdas con signo −.',
+    ],
+  },
+  modi: {
+    titulo: 'MODI (método u-v)',
+    idea: 'Obtiene los mismos costos marginales que el Camino de las Piedras, pero con una cuenta por celda en lugar de un camino cerrado por celda. Para eso asigna un número u a cada fila y un número v a cada columna.',
+    pasos: [
+      'Verifica que haya m + n − 1 celdas básicas (si faltan, agrega ε).',
+      'Fija u = 0 en la primera fila. Para cada celda básica se cumple u + v = costo: despeja los demás valores saltando de una celda básica a otra.',
+      'Para cada celda vacía calcula su costo marginal: costo − u − v. Si todos son ≥ 0, la solución es óptima.',
+      'Si no, entra la celda de marginal más negativo. Traza solo su camino cerrado y calcula θ, igual que en el Camino de las Piedras.',
+      'Suma θ en las celdas + y réstalo en las −. Sale la celda − que quedó en 0. Recalcula u y v, y repite.',
+    ],
+    ventajas:
+      'Mucho menos trabajo por iteración: un solo camino cerrado en vez de uno por cada celda vacía. Es el método que conviene en problemas grandes.',
+    limitaciones:
+      'Es menos intuitivo: u y v no se "ven" en la tabla como un camino. Conviene entender primero el Camino de las Piedras.',
+    convenciones: [
+      'Se fija u = 0 en la primera fila. Con otro punto de partida cambian u y v, pero los costos marginales son los mismos.',
+      'La celda que entra, θ y la celda que sale se eligen igual que en el Camino de las Piedras, así que ambos métodos recorren las mismas soluciones.',
+      'u y v pueden ser negativos; al restarlos, menos por menos da más.',
+    ],
+    errores: [
+      'Usar una celda vacía para despejar u o v: la igualdad u + v = costo solo vale en las celdas básicas.',
+      'Seguir con los u y v de la iteración anterior: hay que recalcularlos cada vez que cambia la base.',
+      'Equivocarse con los signos al restar un valor negativo: 8 − (−2) es 10.',
     ],
   },
 };

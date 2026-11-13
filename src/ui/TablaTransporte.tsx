@@ -13,6 +13,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
   const signos = new Map<string, '+' | '−'>();
   paso.ciclo?.forEach((c, k) => signos.set(`${c.i},${c.j}`, k % 2 === 0 ? '+' : '−'));
   const conPenal = !!paso.penalFila;
+  const conUV = !!paso.u && !!paso.v;
   const elegida = (tipo: 'fila' | 'columna', k: number) =>
     paso.lineaElegida?.tipo === tipo && paso.lineaElegida.k === k;
 
@@ -29,6 +30,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
             ))}
             <th>OFERTA</th>
             {conPenal && <th className="penal">VALOR</th>}
+            {conUV && <th className="penal potencial">u</th>}
           </tr>
         </thead>
         <tbody>
@@ -89,6 +91,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                   {paso.penalFila![i] != null ? fmtCosto(p, paso.penalFila![i]!) : ''}
                 </td>
               )}
+              {conUV && <td className="penal potencial">{fmtCosto(p, paso.u![i])}</td>}
             </tr>
           ))}
           <tr className="fila-demanda">
@@ -100,7 +103,20 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
             ))}
             <td className="vacio" />
             {conPenal && <td className="vacio" />}
+            {conUV && <td className="vacio" />}
           </tr>
+          {conUV && (
+            <tr className="fila-demanda">
+              <th className="etiqueta-fila potencial">v</th>
+              {p.destinos.map((d, j) => (
+                <td key={d} className="penal potencial">
+                  {fmtCosto(p, paso.v![j])}
+                </td>
+              ))}
+              <td className="vacio" />
+              <td className="vacio" />
+            </tr>
+          )}
           {conPenal && (
             <tr className="fila-demanda">
               <th className="etiqueta-fila">VALOR</th>
@@ -157,6 +173,11 @@ export function Leyenda({ paso, problema }: { paso: Paso; problema?: Problema })
         <span>
           <span className="muestra penal" />
           Valor de la fila o columna
+        </span>
+      )}
+      {paso.u && (
+        <span>
+          <span className="muestra potencial" />u y v: en cada celda básica, u + v = costo
         </span>
       )}
       <span>ε = asignación cero (degeneración)</span>

@@ -1,3 +1,5 @@
+import { calcularPotenciales } from './modi';
+import type { Potenciales } from './modi';
 import type { Celda, Paso, Problema, Solucion } from './tipos';
 import {
   EPS,
@@ -103,7 +105,39 @@ function ruta(p: Problema, ciclo: Celda[]): string {
   return [...ciclo, ciclo[0]].map((c) => nombreCelda(p, c)).join(' → ');
 }
 
+/** Forma de calcular los costos marginales: un camino cerrado por celda (piedras) o potenciales u-v (MODI). */
+export type Optimizador = 'piedras' | 'modi';
+
+export const NOMBRE_OPTIMIZADOR: Record<Optimizador, string> = {
+  piedras: 'Camino de las Piedras',
+  modi: 'MODI (u-v)',
+};
+
+/** Escribe un valor que se resta; los negativos van entre paréntesis: "8 − (−2)". */
+function restado(p: Problema, v: number): string {
+  const texto = fmtCosto(p, v).replace(/^-/, '−');
+  return v < -EPS ? `(${texto})` : texto;
+}
+
+function nombrePotencial(p: Problema, tipo: 'fila' | 'columna', k: number): string {
+  return tipo === 'fila' ? `u(${p.origenes[k]})` : `v(${p.destinos[k]})`;
+}
+
+/** Explica, en el orden en que se despejaron, cómo se obtuvo cada potencial. */
+function explicarPotenciales(p: Problema, pot: Potenciales): string {
+  return pot.orden
+    .map(({ linea, valor, celda }) => {
+      const nombre = nombrePotencial(p, linea.tipo, linea.k);
+      if (!celda) return `${nombre} = 0`;
+      const conocido = linea.tipo === 'fila' ? pot.v[celda.j] : pot.u[celda.i];
+      return `${nombre} = ${fmtCosto(p, p.costos[celda.i][celda.j])} − ${restado(p, conocido)} = ${fmtCosto(p, valor)}`;
+    })
+    .join('; ');
+}
+
 export interface OpcionesOptimizacion {
+  /** Cómo se calculan los costos marginales. Por omisión, 'piedras'. */
+  metodo?: Optimizador;
   /** Registrar un paso por cada celda vacía evaluada. */
   detallado?: boolean;
   maxIteraciones?: number;
@@ -121,7 +155,8 @@ export interface ResultadoOptimizacion {
 export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOptimizacion = {}): ResultadoOptimizacion {
   const m = p.ofertas.length;
   const n = p.demandas.length;
-  const { detallado = false, maxIteraciones = 50 * (m + n) } = opciones;
+  const { metodo = 'piedras', detallado = false, maxIteraciones = 50 * (m + n) } = opciones;
+  const modi = metodo === 'modi';
   const sol: Solucion = { x: copiar(inicial.x), basica: copiar(inicial.basica) };
   const pasos: Paso[] = [];
   const palabra = palabraTotal(p);
@@ -135,12 +170,16 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
   pasos.push(
     foto({
       tipo: 'inicio',
-      titulo: 'Camino de las Piedras',
+      titulo: modi ? 'Método MODI (u-v)' : 'Camino de las Piedras',
       explicacion:
         `Se parte de la solución inicial (${palabra} ${fmtTotal(p, sol.x)}). ` +
-        'Para cada celda vacía se forma un camino cerrado que salta solo por celdas básicas, ' +
-        'alternando signos + y −. La suma de costos con esos signos es el costo marginal: ' +
-        'cuánto cambiaría el costo total por cada unidad enviada por esa celda.',
+        (modi
+          ? 'MODI calcula un número u para cada fila y un número v para cada columna, de modo que u + v sea igual al costo en cada celda básica. ' +
+            'Con ellos, el costo marginal de una celda vacía es costo − u − v: cuánto cambiaría el costo total por cada unidad enviada por esa celda. ' +
+            'Da el mismo resultado que el Camino de las Piedras, pero solo hay que trazar un camino cerrado: el de la celda que entra.'
+          : 'Para cada celda vacía se forma un camino cerrado que salta solo por celdas básicas, ' +
+            'alternando signos + y −. La suma de costos con esos signos es el costo marginal: ' +
+            'cuánto cambiaría el costo total por cada unidad enviada por esa celda.'),
     }),
   );
 
@@ -151,7 +190,8 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
         tipo: 'degeneracion',
         titulo: 'Solución degenerada: se agrega ε',
         explicacion:
-          `La solución tiene menos de m + n − 1 = ${m + n - 1} celdas básicas, por lo que algunos caminos no se podrían cerrar. ` +
+          `La solución tiene menos de m + n − 1 = ${m + n - 1} celdas básicas, por lo que ` +
+          (modi ? 'no se podrían despejar todos los valores u y v. ' : 'algunos caminos no se podrían cerrar. ') +
           `Se agrega ε (asignación 0) en ${agregadas.map((c) => nombreCelda(p, c)).join(', ')}.`,
         celda: agregadas[0],
       }),
@@ -163,9 +203,47 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
   for (;;) {
     const marginales = matriz<number | null>(m, n, null);
     const ciclos = matriz<Celda[] | null>(m, n, null);
+    const pot = modi ? calcularPotenciales(p, sol.basica) : null;
+    // En MODI, los pasos de la iteración llevan u y v para que la tabla los muestre.
+    const uv = pot ? { u: pot.u, v: pot.v } : {};
+    if (pot) {
+      pasos.push(
+        foto({
+          tipo: 'potenciales',
+          titulo: `Calcular u y v${iteraciones > 0 ? ' de la nueva solución' : ''}`,
+          explicacion:
+            'En cada celda básica se cumple u + v = costo. Se fija un valor en 0 y los demás se despejan ' +
+            `saltando de una celda básica a otra: ${explicarPotenciales(p, pot)}. ` +
+            'Con estos valores, el costo marginal de cada celda vacía es costo − u − v.',
+          ...uv,
+        }),
+      );
+    }
     for (let i = 0; i < m; i++) {
       for (let j = 0; j < n; j++) {
         if (sol.basica[i][j]) continue;
+        if (pot) {
+          const valor = p.costos[i][j] - pot.u[i] - pot.v[j];
+          marginales[i][j] = valor;
+          if (detallado) {
+            pasos.push(
+              foto({
+                tipo: 'evaluacion',
+                titulo: `Evaluar ${nombreCelda(p, { i, j })}`,
+                explicacion:
+                  `Costo marginal = costo − ${nombrePotencial(p, 'fila', i)} − ${nombrePotencial(p, 'columna', j)} = ` +
+                  `${fmtCosto(p, p.costos[i][j])} − ${restado(p, pot.u[i])} − ${restado(p, pot.v[j])} = ${fmtCosto(p, valor)}. ` +
+                  (valor < -EPS
+                    ? 'Es negativo: enviar por esta celda reduciría el costo.'
+                    : 'No es negativo: usar esta celda no mejora la solución.'),
+                celda: { i, j },
+                marginales: copiar(marginales),
+                ...uv,
+              }),
+            );
+          }
+          continue;
+        }
         const ciclo = buscarCiclo(sol.basica, { i, j });
         if (!ciclo) continue;
         const valor = costoMarginal(p, ciclo);
@@ -223,6 +301,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
               ? ` Las celdas ${ceros.join(', ')} tienen marginal 0: existen soluciones óptimas alternativas.`
               : ''),
           marginales,
+          ...uv,
         }),
       );
       optimo = true;
@@ -240,13 +319,14 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
             'así que esta solución no está confirmada como óptima. Suele ocurrir cuando la solución es degenerada ' +
             'y el método repite las mismas bases.',
           marginales,
+          ...uv,
         }),
       );
       break;
     }
 
     iteraciones++;
-    const ciclo = ciclos[entrada.i][entrada.j]!;
+    const ciclo = ciclos[entrada.i][entrada.j] ?? buscarCiclo(sol.basica, entrada)!;
     const marginal = marginales[entrada.i][entrada.j]!;
     const negativas = ciclo.filter((_, k) => k % 2 === 1);
     const theta = Math.min(...negativas.map((c) => sol.x[c.i][c.j]));
@@ -258,11 +338,13 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
         titulo: `Iteración ${iteraciones}: entra ${nombreCelda(p, entrada)}`,
         explicacion:
           `La celda ${nombreCelda(p, entrada)} tiene el costo marginal más negativo (${fmtCosto(p, marginal)}). ` +
+          (modi ? `Solo ahora se traza un camino cerrado, el de esa celda: ${ruta(p, ciclo)}. ` : '') +
           `θ es el menor valor entre las celdas con signo −: min(${negativas.map((c) => fmt(sol.x[c.i][c.j])).join(', ')}) = ${fmt(theta)}. ` +
           'Se suma θ en las celdas + y se resta en las celdas −; así se conservan ofertas y demandas.',
         celda: entrada,
         ciclo,
         marginales,
+        ...uv,
       }),
     );
 

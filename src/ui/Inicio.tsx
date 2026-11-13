@@ -1,7 +1,8 @@
+import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
 
 interface Props {
-  onMetodo: (m: MetodoInicial) => void;
+  onMetodo: (m: MetodoInicial, o: Optimizador) => void;
   onTeoria: () => void;
   onLaboratorio: () => void;
 }
@@ -22,7 +23,7 @@ const FLUJOS: [number, number, number][] = [
 const curva = (o: number, d: number) =>
   `M112 ${ORIGENES[o]} C 300 ${ORIGENES[o]}, 300 ${DESTINOS[d]}, 488 ${DESTINOS[d]}`;
 
-const MODULOS: { titulo: string; texto: string; metodo: MetodoInicial }[] = [
+const MODULOS: { titulo: string; texto: string; metodo: MetodoInicial; optimizador?: Optimizador }[] = [
   {
     titulo: 'Esquina Noroeste',
     texto: 'Llena la tabla de arriba a la izquierda hacia abajo a la derecha, sin mirar los costos.',
@@ -39,6 +40,12 @@ const MODULOS: { titulo: string; texto: string; metodo: MetodoInicial }[] = [
     titulo: 'Camino de las Piedras',
     texto: 'Mejora la solución con caminos cerrados de signos + y − hasta el óptimo.',
     metodo: 'noroeste',
+  },
+  {
+    titulo: 'MODI (u-v)',
+    texto: 'Llega al mismo óptimo con menos trabajo: un valor por fila y columna en vez de un camino por celda.',
+    metodo: 'noroeste',
+    optimizador: 'modi',
   },
 ];
 
@@ -61,7 +68,7 @@ export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
             optimiza con el Camino de las Piedras y diseña tu propia heurística.
           </p>
           <div className="acciones">
-            <button className="primario" onClick={() => onMetodo('noroeste')}>
+            <button className="primario" onClick={() => onMetodo('noroeste', 'piedras')}>
               Empezar con un ejemplo
               <svg
                 width="18"
@@ -137,18 +144,18 @@ export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
 
       <div className="modulos-cabecera">
         <h2>Qué vas a aprender</h2>
-        <p>Cinco módulos, del método más simple a tu propia heurística</p>
+        <p>Seis módulos, del método más simple a tu propia heurística</p>
       </div>
       <div className="modulos">
         {MODULOS.map((m, k) => (
-          <button key={m.titulo} className="modulo" onClick={() => onMetodo(m.metodo)}>
-            <span className={k === 3 ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
+          <button key={m.titulo} className="modulo" onClick={() => onMetodo(m.metodo, m.optimizador ?? 'piedras')}>
+            <span className={k >= 3 ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
             <h3>{m.titulo}</h3>
             <p>{m.texto}</p>
           </button>
         ))}
         <button className="modulo destacado" onClick={onLaboratorio}>
-          <span className="modulo-numero">05</span>
+          <span className="modulo-numero">06</span>
           <h3>Tu propia heurística</h3>
           <p>Combina criterios, pruébala y compárala con los métodos clásicos.</p>
         </button>

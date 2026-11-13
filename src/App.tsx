@@ -138,7 +138,7 @@ export function App() {
       <main>
         {vista === 'inicio' && (
           <Inicio
-            onMetodo={(metodo) => ir({ vista: 'aprender', metodo })}
+            onMetodo={(metodo, optimizador) => ir({ vista: 'aprender', metodo, optimizador })}
             onTeoria={() => ir({ vista: 'teoria' })}
             onLaboratorio={() => ir({ vista: 'laboratorio' })}
           />
@@ -146,11 +146,19 @@ export function App() {
         {vista === 'problema' && (
           <EditorProblema problema={problema} onChange={setProblema} onContinuar={() => ir({ vista: 'aprender' })} />
         )}
-        {vista === 'teoria' && <Teoria onPractica={(metodo) => ir({ vista: 'aprender', metodo })} />}
+        {vista === 'teoria' && (
+          <Teoria onPractica={(metodo, optimizador) => ir({ vista: 'aprender', metodo, optimizador })} />
+        )}
         {(vista === 'aprender' || vista === 'laboratorio') &&
           (valido ? (
             vista === 'aprender' ? (
-              <Aprender problema={problema} metodo={ruta.metodo} onMetodo={(metodo) => ir({ metodo })} />
+              <Aprender
+                problema={problema}
+                metodo={ruta.metodo}
+                optimizador={ruta.optimizador}
+                onMetodo={(metodo) => ir({ metodo })}
+                onOptimizador={(optimizador) => ir({ optimizador })}
+              />
             ) : (
               <Laboratorio problema={problema} />
             )

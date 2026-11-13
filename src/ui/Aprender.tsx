@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { optimizar } from '../core/caminoPiedras';
+import { NOMBRE_OPTIMIZADOR, optimizar } from '../core/caminoPiedras';
+import type { Optimizador } from '../core/caminoPiedras';
 import { NOMBRE_METODO, resolverMetodo } from '../core/metodos';
 import type { MetodoInicial } from '../core/metodos';
 import type { Problema } from '../core/tipos';
@@ -9,14 +10,17 @@ import { Reproductor } from './Reproductor';
 import type { Fase } from './Reproductor';
 
 const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
+const OPTIMIZADORES: Optimizador[] = ['piedras', 'modi'];
 
 interface Props {
   problema: Problema;
   metodo: MetodoInicial;
+  optimizador: Optimizador;
   onMetodo: (m: MetodoInicial) => void;
+  onOptimizador: (o: Optimizador) => void;
 }
 
-export function Aprender({ problema, metodo, onMetodo }: Props) {
+export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizador }: Props) {
   const [optimizarOn, setOptimizarOn] = useState(true);
   const [detallado, setDetallado] = useState(false);
   const [practica, setPractica] = useState(false);
@@ -26,11 +30,15 @@ export function Aprender({ problema, metodo, onMetodo }: Props) {
     const pasos = [...inicial.pasos];
     const fases: Fase[] = [{ desde: 0, etiqueta: `Construcción · ${NOMBRE_METODO[metodo]}`, tipo: 'construccion' }];
     if (optimizarOn) {
-      fases.push({ desde: pasos.length, etiqueta: 'Optimización · Camino de las Piedras', tipo: 'optimizacion' });
-      pasos.push(...optimizar(inicial.problema, inicial.solucion, { detallado }).pasos);
+      fases.push({
+        desde: pasos.length,
+        etiqueta: `Optimización · ${NOMBRE_OPTIMIZADOR[optimizador]}`,
+        tipo: 'optimizacion',
+      });
+      pasos.push(...optimizar(inicial.problema, inicial.solucion, { metodo: optimizador, detallado }).pasos);
     }
     return { balanceado: inicial.problema, pasos, fases };
-  }, [problema, metodo, optimizarOn, detallado]);
+  }, [problema, metodo, optimizador, optimizarOn, detallado]);
 
   return (
     <section className="vista">
@@ -61,8 +69,22 @@ export function Aprender({ problema, metodo, onMetodo }: Props) {
       <div className="chips">
         <label className="chip-check">
           <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
-          Optimizar con Camino de las Piedras
+          Optimizar con
         </label>
+        <div className="segmentado" role="radiogroup" aria-label="Método de optimización">
+          {OPTIMIZADORES.map((k) => (
+            <button
+              key={k}
+              role="radio"
+              aria-checked={optimizador === k}
+              className={optimizador === k ? 'activo' : ''}
+              disabled={!optimizarOn}
+              onClick={() => onOptimizador(k)}
+            >
+              {NOMBRE_OPTIMIZADOR[k]}
+            </button>
+          ))}
+        </div>
         <label className="chip-check">
           <input
             type="checkbox"
@@ -80,11 +102,11 @@ export function Aprender({ problema, metodo, onMetodo }: Props) {
 
       <div className="teorias">
         <TarjetaTeoria teoria={TEORIA[metodo]} />
-        {optimizarOn && <TarjetaTeoria teoria={TEORIA.piedras} />}
+        {optimizarOn && <TarjetaTeoria teoria={TEORIA[optimizador]} />}
       </div>
 
       <Reproductor
-        key={`${metodo}-${optimizarOn}-${detallado}-${practica}-${JSON.stringify(problema)}`}
+        key={`${metodo}-${optimizador}-${optimizarOn}-${detallado}-${practica}-${JSON.stringify(problema)}`}
         problema={balanceado}
         pasos={pasos}
         fases={fases}

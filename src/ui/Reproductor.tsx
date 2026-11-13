@@ -30,6 +30,7 @@ const ETIQUETA_TIPO: Record<Paso['tipo'], string> = {
   asignacion: 'Asignación',
   fin: 'Solución inicial',
   degeneracion: 'Degeneración',
+  potenciales: 'Valores u y v',
   evaluacion: 'Evaluación',
   ciclo: 'Entra a la base',
   pivoteo: 'Nueva solución',
@@ -129,7 +130,9 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
         ]
       : meta.tipo === 'ciclo'
         ? [
-            'Calcula el costo marginal de cada celda vacía recorriendo su camino cerrado. Entra la de marginal más negativo.',
+            meta.u
+              ? 'Calcula costo − u − v en cada celda vacía con los valores que muestra la tabla. Entra la de resultado más negativo.'
+              : 'Calcula el costo marginal de cada celda vacía recorriendo su camino cerrado. Entra la de marginal más negativo.',
             'Ahora la tabla muestra el costo marginal de cada celda vacía.',
           ]
         : [

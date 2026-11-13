@@ -57,8 +57,14 @@ export const GLOSARIO: Termino[] = [
   {
     termino: 'Costo marginal',
     definicion:
-      'Cambio del costo total por cada unidad enviada por una celda vacía. Se obtiene sumando y restando alternadamente los costos de su camino cerrado.',
+      'Cambio del costo total por cada unidad enviada por una celda vacía. Se obtiene sumando y restando alternadamente los costos de su camino cerrado o, en MODI, con costo − u − v.',
     patron: /costos? marginal(es)?/i,
+  },
+  {
+    termino: 'Valores u y v (potenciales)',
+    definicion:
+      'En el método MODI, un número por fila (u) y uno por columna (v) elegidos para que u + v sea igual al costo en cada celda básica. Con ellos, el costo marginal de una celda vacía es costo − u − v.',
+    patron: /valores u y v|u \+ v = costo/i,
   },
   {
     termino: 'θ (theta)',

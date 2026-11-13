@@ -5,18 +5,22 @@ import { escribirRuta, leerRuta } from '../src/ui/ruta';
 
 describe('rutas', () => {
   it('interpreta la pantalla y el método de la dirección', () => {
-    expect(leerRuta('#/aprender/vogel')).toEqual({ vista: 'aprender', metodo: 'vogel' });
-    expect(leerRuta('#/laboratorio')).toEqual({ vista: 'laboratorio', metodo: 'noroeste' });
+    expect(leerRuta('#/aprender/vogel')).toEqual({ vista: 'aprender', metodo: 'vogel', optimizador: 'piedras' });
+    expect(leerRuta('#/aprender/vogel/modi')).toEqual({ vista: 'aprender', metodo: 'vogel', optimizador: 'modi' });
+    expect(leerRuta('#/laboratorio')).toEqual({ vista: 'laboratorio', metodo: 'noroeste', optimizador: 'piedras' });
   });
 
   it('cae en el inicio ante direcciones vacías o desconocidas', () => {
     expect(leerRuta('').vista).toBe('inicio');
-    expect(leerRuta('#/no-existe/otro')).toEqual({ vista: 'inicio', metodo: 'noroeste' });
+    expect(leerRuta('#/no-existe/otro')).toEqual({ vista: 'inicio', metodo: 'noroeste', optimizador: 'piedras' });
   });
 
   it('escribir y leer son inversas', () => {
-    const ruta = { vista: 'aprender', metodo: 'costoMinimo' } as const;
+    const ruta = { vista: 'aprender', metodo: 'costoMinimo', optimizador: 'piedras' } as const;
     expect(leerRuta(escribirRuta(ruta))).toEqual(ruta);
+    expect(escribirRuta(ruta)).toBe('#/aprender/costoMinimo');
+    const conModi = { ...ruta, optimizador: 'modi' } as const;
+    expect(leerRuta(escribirRuta(conModi))).toEqual(conModi);
   });
 });
 

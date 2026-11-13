@@ -1,11 +1,14 @@
 import { GLOSARIO } from '../contenido/glosario';
 import { CONVENCIONES_GENERALES, TEORIA, VARIANTES } from '../contenido/teoria';
 import type { TemaTeoria } from '../contenido/teoria';
+import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
 
-const TEMAS: TemaTeoria[] = ['noroeste', 'costoMinimo', 'vogel', 'piedras'];
+const TEMAS: TemaTeoria[] = ['noroeste', 'costoMinimo', 'vogel', 'piedras', 'modi'];
 
-export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial) => void }) {
+const esOptimizador = (tema: TemaTeoria): tema is Optimizador => tema === 'piedras' || tema === 'modi';
+
+export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial, optimizador: Optimizador) => void }) {
   return (
     <section className="vista">
       <header className="vista-cabecera">
@@ -24,7 +27,7 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial) => 
           const t = TEORIA[tema];
           return (
             <article key={tema} className="tarjeta teoria-tarjeta">
-              <span className={tema === 'piedras' ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
+              <span className={esOptimizador(tema) ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
               <h2>{t.titulo}</h2>
               <p className="teoria-idea">{t.idea}</p>
               <h3>Pasos</h3>
@@ -51,7 +54,10 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial) => 
                   <li key={c}>{c}</li>
                 ))}
               </ul>
-              <button className="secundario" onClick={() => onPractica(tema === 'piedras' ? 'noroeste' : tema)}>
+              <button
+                className="secundario"
+                onClick={() => (esOptimizador(tema) ? onPractica('noroeste', tema) : onPractica(tema, 'piedras'))}
+              >
                 Verlo paso a paso
               </button>
             </article>

@@ -2108,3 +2108,24 @@ button.celda-ruta.prohibida {
 .titulo-bloque {
   margin: 1rem 0 0;
 }
+
+/* ───────── MODI: valores u y v ───────── */
+.tabla-transporte .penal.potencial,
+.muestra.potencial {
+  background: var(--azul-suave);
+}
+
+.tabla-transporte th.potencial {
+  background: none;
+  color: var(--azul);
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.etiqueta-potenciales {
+  background: var(--azul-suave);
+  color: var(--azul);
+}

@@ -39,6 +39,7 @@ export type TipoPaso =
   | 'asignacion'
   | 'fin'
   | 'degeneracion'
+  | 'potenciales'
   | 'evaluacion'
   | 'ciclo'
   | 'pivoteo'
@@ -67,6 +68,9 @@ export interface Paso {
   /** Camino cerrado; los signos alternan +, −, +, … empezando por ciclo[0]. */
   ciclo?: Celda[];
   marginales?: (number | null)[][];
+  /** Potenciales del método MODI: u por fila y v por columna (u + v = costo en las básicas). */
+  u?: number[];
+  v?: number[];
   costoTotal: number;
 }
 

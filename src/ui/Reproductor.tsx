@@ -25,6 +25,7 @@ interface Props {
 const ETIQUETA_TIPO: Record<Paso['tipo'], string> = {
   inicio: 'Inicio',
   balanceo: 'Balanceo',
+  conversion: 'Conversión',
   penalizaciones: 'Análisis',
   asignacion: 'Asignación',
   fin: 'Solución inicial',
@@ -238,7 +239,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
             onCeldaClick={meta ? alClic : undefined}
             marcada={ej.marcada}
           />
-          <Leyenda paso={visible} />
+          <Leyenda paso={visible} problema={problema} />
         </section>
 
         <aside className="tarjeta explicacion" aria-live="polite">
@@ -275,7 +276,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
             </p>
           )}
           <div className="costo-grande">
-            Costo actual <strong>{fmt(paso.costoTotal)}</strong>
+            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <strong>{fmt(paso.costoTotal)}</strong>
           </div>
         </aside>
       </div>

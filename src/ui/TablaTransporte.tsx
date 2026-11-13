@@ -40,6 +40,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                 const basica = paso.basica[i][j];
                 const marginal = paso.marginales?.[i][j];
                 const puntaje = paso.puntajes?.[i][j];
+                const prohibida = p.prohibidas?.[i]?.[j] ?? false;
                 const clases = [
                   'celda',
                   basica ? 'basica' : '',
@@ -47,14 +48,21 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
                   signo === '+' ? 'mas' : signo === '−' ? 'menos' : '',
                   paso.celda?.i === i && paso.celda?.j === j ? 'actual' : '',
                   marcada?.i === i && marcada?.j === j ? 'marcada' : '',
+                  prohibida ? 'prohibida' : '',
                 ];
                 return (
                   <td
                     key={d}
                     className={clases.filter(Boolean).join(' ')}
-                    title={`${o} → ${d}: costo ${fmt(p.costos[i][j])}`}
+                    title={
+                      prohibida
+                        ? `${o} → ${d}: ruta prohibida (costo M = ${fmt(p.costos[i][j])})`
+                        : p.utilidades
+                          ? `${o} → ${d}: utilidad ${fmt(p.utilidades[i][j])}, costo de oportunidad ${fmt(p.costos[i][j])}`
+                          : `${o} → ${d}: costo ${fmt(p.costos[i][j])}`
+                    }
                   >
-                    <span className="costo">{fmt(p.costos[i][j])}</span>
+                    <span className="costo">{prohibida ? 'M' : fmt(p.costos[i][j])}</span>
                     {signo && <span className="signo">{signo}</span>}
                     {basica ? (
                       <span className="valor">{paso.x[i][j] === 0 ? 'ε' : fmt(paso.x[i][j])}</span>
@@ -122,7 +130,7 @@ function Cantidad({ original, restante }: { original: number; restante?: number 
 }
 
 /** Leyenda de los símbolos y colores de la tabla, según lo que muestra el paso. */
-export function Leyenda({ paso }: { paso: Paso }) {
+export function Leyenda({ paso, problema }: { paso: Paso; problema?: Problema }) {
   return (
     <div className="leyenda">
       <span>
@@ -152,6 +160,8 @@ export function Leyenda({ paso }: { paso: Paso }) {
         </span>
       )}
       <span>ε = asignación cero (degeneración)</span>
+      {problema?.utilidades && <span>Número pequeño de cada celda = costo de oportunidad</span>}
+      {problema?.M !== undefined && <span>M = {fmt(problema.M)}: costo de una ruta prohibida</span>}
     </div>
   );
 }

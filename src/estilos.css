@@ -2057,3 +2057,50 @@ button.boton-texto {
 .resultados-experimento td:not(:first-child) {
   white-space: nowrap;
 }
+
+/* ───────── Maximización y rutas prohibidas ───────── */
+.etiqueta-conversion {
+  background: var(--ambar-suave);
+  color: var(--tinta);
+}
+
+.editor-barra + .editor-barra {
+  margin-top: 0.75rem;
+}
+
+.editor-tarjeta > .ayuda {
+  margin: 0.75rem 0 0;
+}
+
+button.celda-ruta {
+  width: 5rem;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 12px;
+  border-style: dashed;
+  border-color: var(--apagado);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+button.celda-ruta.prohibida {
+  border-style: solid;
+  border-color: var(--coral);
+  background: var(--coral-suave);
+  color: var(--coral);
+  font-weight: 800;
+}
+
+.tabla-transporte .celda.prohibida .costo {
+  color: var(--coral);
+  font-weight: 800;
+}
+
+.tabla-transporte .celda.prohibida:not(.basica):not(.mas):not(.menos) {
+  background-image: repeating-linear-gradient(135deg, transparent 0 7px, var(--coral-suave) 7px 9px);
+}
+
+.editor-barra:has(+ .editor-barra) {
+  padding-bottom: 0;
+  border-bottom: 0;
+}

@@ -8,6 +8,12 @@ export function validar(p: Problema): string[] {
   if (todos.some((v) => v < 0)) errores.push('No se admiten valores negativos.');
   if (suma(p.ofertas) <= 0) errores.push('La oferta total debe ser mayor que 0.');
   if (suma(p.demandas) <= 0) errores.push('La demanda total debe ser mayor que 0.');
+  const prohibida = (i: number, j: number) => p.prohibidas?.[i]?.[j] ?? false;
+  if (
+    p.ofertas.some((o, i) => o > 0 && p.demandas.every((_, j) => prohibida(i, j))) ||
+    p.demandas.some((d, j) => d > 0 && p.ofertas.every((_, i) => prohibida(i, j)))
+  )
+    errores.push('Cada origen y cada destino necesita al menos una ruta permitida.');
   return errores;
 }
 
@@ -21,7 +27,18 @@ export function esProblema(x: unknown): x is Problema {
   if (!numeros(p.ofertas) || !numeros(p.demandas) || !Array.isArray(p.costos)) return false;
   const m = p.ofertas.length;
   const n = p.demandas.length;
+  const prohibidasValidas =
+    p.prohibidas === undefined ||
+    (Array.isArray(p.prohibidas) &&
+      p.prohibidas.length === m &&
+      p.prohibidas.every(
+        (fila) => Array.isArray(fila) && fila.length === n && fila.every((v) => typeof v === 'boolean'),
+      ));
   return (
+    prohibidasValidas &&
+    (p.objetivo === undefined || p.objetivo === 'min' || p.objetivo === 'max') &&
+    p.utilidades === undefined &&
+    p.M === undefined &&
     m >= 2 &&
     n >= 2 &&
     p.costos.length === m &&

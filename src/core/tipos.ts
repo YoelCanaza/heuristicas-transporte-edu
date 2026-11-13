@@ -4,6 +4,14 @@ export interface Problema {
   costos: number[][];
   origenes: string[];
   destinos: string[];
+  /** Rutas por las que no se puede enviar; ausente si todas están permitidas. */
+  prohibidas?: boolean[][];
+  /** 'max' si los valores de `costos` son utilidades que se quieren maximizar. Por omisión, 'min'. */
+  objetivo?: 'min' | 'max';
+  /** Solo en el problema convertido: utilidades originales (`costos` contiene costos de oportunidad). */
+  utilidades?: number[][];
+  /** Solo en el problema convertido: valor del costo M asignado a las rutas prohibidas. */
+  M?: number;
 }
 
 export interface Celda {
@@ -26,6 +34,7 @@ export interface Solucion {
 export type TipoPaso =
   | 'inicio'
   | 'balanceo'
+  | 'conversion'
   | 'penalizaciones'
   | 'asignacion'
   | 'fin'

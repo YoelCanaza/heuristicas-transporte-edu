@@ -1,5 +1,5 @@
 import type { Celda, Linea, Paso, Problema, Solucion } from './tipos';
-import { EPS, copiar, costoTotal, fmt, matriz, nombreCelda } from './util';
+import { EPS, copiar, fmt, matriz, nombreCelda, total } from './util';
 
 export interface EstadoConstruccion {
   costos: number[][];
@@ -65,7 +65,7 @@ export function construir(p: Problema, selector: Selector): { solucion: Solucion
     demandaRestante: [...e.demanda],
     filaTachada: [...e.filaTachada],
     columnaTachada: [...e.columnaTachada],
-    costoTotal: costoTotal(p.costos, x),
+    costoTotal: total(p, x),
     ...parcial,
   });
 

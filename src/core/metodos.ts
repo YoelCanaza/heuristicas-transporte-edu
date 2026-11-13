@@ -1,8 +1,9 @@
 import { balancear } from './balanceo';
 import { cantidadAsignable, celdasDisponibles, columnasActivas, construir, filasActivas } from './constructivo';
 import type { EstadoConstruccion, Selector } from './constructivo';
+import { convertir } from './conversion';
 import type { Paso, Problema, Resultado } from './tipos';
-import { costoTotal, desgloseCosto, elegirMejor, fmt, matriz, nombreCelda } from './util';
+import { desgloseCosto, elegirMejor, fmt, matriz, nombreCelda, palabraTotal, prohibidasUsadas, total } from './util';
 
 export type MetodoInicial = 'noroeste' | 'costoMinimo' | 'vogel';
 
@@ -101,7 +102,8 @@ export const SELECTOR: Record<MetodoInicial, Selector> = {
 
 /** Balancea el problema y construye la solución inicial con el selector, registrando todos los pasos. */
 export function resolverInicial(original: Problema, selector: Selector, nombreMetodo: string): Resultado {
-  const { problema, ficticio, explicacion } = balancear(original);
+  const { problema: balanceado, ficticio, explicacion } = balancear(original);
+  const { problema, explicacion: conversion } = convertir(balanceado);
   const m = problema.ofertas.length;
   const n = problema.demandas.length;
   const vacio: Paso = {
@@ -118,19 +120,31 @@ export function resolverInicial(original: Problema, selector: Selector, nombreMe
   };
   const pasos: Paso[] = [vacio];
   if (ficticio) pasos.push({ ...vacio, tipo: 'balanceo', titulo: 'Balancear el problema', explicacion });
+  if (conversion)
+    pasos.push({
+      ...vacio,
+      tipo: 'conversion',
+      titulo: problema.utilidades ? 'Convertir a un problema de minimización' : 'Rutas prohibidas: costo M',
+      explicacion: conversion,
+    });
 
   const { solucion, pasos: construccion } = construir(problema, selector);
   pasos.push(...construccion);
 
-  const costo = costoTotal(problema.costos, solucion.x);
+  const costo = total(problema, solucion.x);
+  const palabra = palabraTotal(problema);
+  const usadas = prohibidasUsadas(problema, solucion.x);
   const ultimo = pasos[pasos.length - 1];
   pasos.push({
     ...ultimo,
     tipo: 'fin',
-    titulo: `Solución inicial: costo ${fmt(costo)}`,
+    titulo: `Solución inicial: ${palabra} ${fmt(costo)}`,
     explicacion:
       `${nombreMetodo} terminó con ${m + n - 1} celdas básicas (m + n − 1). ` +
-      `Costo total = Σ c·x = ${desgloseCosto(problema, solucion.x)}.`,
+      `${problema.utilidades ? 'Utilidad total = Σ utilidad·x' : 'Costo total = Σ c·x'} = ${desgloseCosto(problema, solucion.x)}.` +
+      (usadas.length > 0
+        ? ` Atención: esta solución envía por ${usadas.length === 1 ? 'la ruta prohibida' : 'las rutas prohibidas'} ${usadas.map((c) => nombreCelda(problema, c)).join(', ')}, así que todavía no es válida. La optimización la corregirá si existe una alternativa.`
+        : ''),
     celda: undefined,
   });
 

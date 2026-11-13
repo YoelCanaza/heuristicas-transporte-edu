@@ -18,6 +18,27 @@ export function costoTotal(costos: number[][], x: number[][]): number {
   return total;
 }
 
+/** Total real de una solución: la utilidad si el problema es de maximización; si no, el costo. */
+export function total(p: Problema, x: number[][]): number {
+  return costoTotal(p.utilidades ?? p.costos, x);
+}
+
+/** Nombre del total que se optimiza. */
+export function palabraTotal(p: Problema): 'costo' | 'utilidad' {
+  return p.utilidades ? 'utilidad' : 'costo';
+}
+
+/** Rutas prohibidas por las que la solución envía unidades. */
+export function prohibidasUsadas(p: Problema, x: number[][]): Celda[] {
+  const usadas: Celda[] = [];
+  x.forEach((fila, i) =>
+    fila.forEach((v, j) => {
+      if (v > EPS && p.prohibidas?.[i]?.[j]) usadas.push({ i, j });
+    }),
+  );
+  return usadas;
+}
+
 export function suma(v: number[]): number {
   return v.reduce((a, b) => a + b, 0);
 }
@@ -49,13 +70,14 @@ export function elegirMejor<T>(lista: T[], clave: (e: T) => number[]): T {
   return mejor;
 }
 
-/** Desglose Σ c·x de las celdas con asignación positiva. */
+/** Desglose Σ c·x (o Σ utilidad·x) de las celdas con asignación positiva. */
 export function desgloseCosto(p: Problema, x: number[][]): string {
+  const valores = p.utilidades ?? p.costos;
   const terminos: string[] = [];
   for (let i = 0; i < x.length; i++) {
     for (let j = 0; j < x[i].length; j++) {
-      if (x[i][j] > EPS) terminos.push(`${fmt(p.costos[i][j])}·${fmt(x[i][j])}`);
+      if (x[i][j] > EPS) terminos.push(`${fmt(valores[i][j])}·${fmt(x[i][j])}`);
     }
   }
-  return `${terminos.join(' + ')} = ${fmt(costoTotal(p.costos, x))}`;
+  return `${terminos.join(' + ')} = ${fmt(costoTotal(valores, x))}`;
 }

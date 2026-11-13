@@ -4,7 +4,7 @@ Software educativo web para aprender las heurísticas del Problema de Transporte
 (Esquina Noroeste, Costo Mínimo y Aproximación de Vogel), optimizar con el Camino de
 las Piedras y diseñar heurísticas propias.
 
-Versión actual: **0.4.0**. Funciona por completo en el navegador: no necesita servidor
+Versión actual: **0.5.0**. Funciona por completo en el navegador: no necesita servidor
 ni conexión a internet una vez cargado.
 
 ## Qué ofrece
@@ -16,6 +16,17 @@ ni conexión a internet una vez cargado.
 | Aprender    | Ver cada método paso a paso, con la explicación de cada decisión, y continuar con el Camino de las Piedras: camino cerrado, costo marginal, θ, celda que entra y celda que sale.     |
 | Laboratorio | Diseñar una heurística propia, ejecutarla paso a paso, plantear una hipótesis y ponerla a prueba contra los métodos clásicos y el óptimo en cientos de problemas reproducibles.      |
 | Teoría      | Idea, pasos, ventajas, limitaciones y errores frecuentes de cada método; convenciones de desempate que usa la aplicación; glosario.                                                  |
+
+### Maximización y rutas prohibidas
+
+En la pantalla Problema se puede cambiar el objetivo a **maximizar utilidades** y **marcar
+rutas prohibidas**. Los métodos no cambian: antes de empezar, un paso de conversión explica
+cómo se llega a un problema de minimización equivalente.
+
+- Las utilidades se cambian por su costo de oportunidad (la mayor utilidad menos la de la
+  celda). El total que se muestra sigue siendo la utilidad real.
+- Las rutas prohibidas reciben el costo M, un número mayor que cualquier costo alcanzable.
+  Si no existe solución sin usarlas, la aplicación lo dice en lugar de declarar un óptimo.
 
 ### Modo práctica
 
@@ -67,6 +78,7 @@ se pueden compartir enlaces directos.
   - `balanceo.ts`, `constructivo.ts`, `metodos.ts`: balanceo y las tres heurísticas, que
     comparten un mismo algoritmo constructivo y solo difieren en la regla que elige la celda;
   - `caminoPiedras.ts`: optimización, con manejo de la degeneración;
+  - `conversion.ts`: maximización (costos de oportunidad) y rutas prohibidas (costo M);
   - `heuristica.ts`, `comparacion.ts`, `bitacora.ts`: heurística del usuario, experimento
     comparativo y bitácora de intentos;
   - `diagnostico.ts`: diagnóstico de errores y validación del trazado en el modo práctica;
@@ -83,7 +95,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-60 pruebas automatizadas. Entre ellas:
+71 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -91,6 +103,9 @@ permite probar toda la lógica sin interfaz.
   celdas básicas y el Camino de las Piedras llega al mismo óptimo desde las tres.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores y la validación del trazado del camino cerrado.
+- Maximización: un caso 2×2 resuelto a mano y, en problemas aleatorios, la misma utilidad
+  óptima desde los tres métodos. Rutas prohibidas: el óptimo las evita, coincide con poner
+  a mano un costo enorme y se avisa cuando no hay solución sin ellas.
 - Las cuatro familias de problemas generan datos válidos y reproducibles; el puntaje con
   solo el peso del costo reproduce el Costo Mínimo; el experimento por partes da el mismo
   resultado que de una vez.

@@ -21,6 +21,10 @@ function redimensionar(p: Problema, m: number, n: number): Problema {
     costos: Array.from({ length: m }, (_, i) => Array.from({ length: n }, (_, j) => p.costos[i]?.[j] ?? 0)),
     origenes: nombres('O', m),
     destinos: nombres('D', n),
+    objetivo: p.objetivo,
+    prohibidas:
+      p.prohibidas &&
+      Array.from({ length: m }, (_, i) => Array.from({ length: n }, (_, j) => p.prohibidas![i]?.[j] ?? false)),
   };
 }
 
@@ -38,6 +42,11 @@ function Numero({ valor, etiqueta, onChange }: { valor: number; etiqueta: string
 
 export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
   const [semilla, setSemilla] = useState(() => Math.floor(Math.random() * 1e6));
+  const [marcando, setMarcando] = useState(false);
+  const maximizar = p.objetivo === 'max';
+  const valor = maximizar ? 'Utilidad' : 'Costo';
+  const prohibida = (i: number, j: number) => p.prohibidas?.[i]?.[j] ?? false;
+  const cuantasProhibidas = p.prohibidas?.flat().filter(Boolean).length ?? 0;
   const m = p.ofertas.length;
   const n = p.demandas.length;
   const errores = validar(p);
@@ -49,8 +58,13 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
   const setDemanda = (j: number, v: number) =>
     onChange({ ...p, demandas: p.demandas.map((d, b) => (b === j ? v : d)) });
 
+  const alternarProhibida = (i: number, j: number) => {
+    const prohibidas = p.costos.map((fila, a) => fila.map((_, b) => prohibida(a, b) !== (a === i && b === j)));
+    onChange({ ...p, prohibidas: prohibidas.some((fila) => fila.some(Boolean)) ? prohibidas : undefined });
+  };
+
   const aleatorio = () => {
-    onChange(generarProblema(crearAleatorio(semilla), { m, n }));
+    onChange({ ...generarProblema(crearAleatorio(semilla), { m, n }), objetivo: p.objetivo });
     setSemilla(Math.floor(Math.random() * 1e6));
   };
 
@@ -63,8 +77,9 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
           <p className="eyebrow">01 — Problema</p>
           <h1>Define el problema</h1>
           <p className="vista-descripcion">
-            Ingresa el costo de enviar una unidad desde cada origen a cada destino, la oferta de cada origen y la
-            demanda de cada destino. El objetivo es enviarlo todo al menor costo total.
+            Ingresa {maximizar ? 'la utilidad que deja' : 'el costo de'} enviar una unidad desde cada origen a cada
+            destino, la oferta de cada origen y la demanda de cada destino. El objetivo es enviarlo todo{' '}
+            {maximizar ? 'con la mayor utilidad total' : 'al menor costo total'}.
           </p>
         </div>
       </header>
@@ -96,6 +111,36 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
             </div>
           </div>
 
+          <div className="editor-barra">
+            <div className="segmentado" role="radiogroup" aria-label="Objetivo">
+              <button
+                role="radio"
+                aria-checked={!maximizar}
+                className={maximizar ? '' : 'activo'}
+                onClick={() => onChange({ ...p, objetivo: undefined })}
+              >
+                Minimizar costo
+              </button>
+              <button
+                role="radio"
+                aria-checked={maximizar}
+                className={maximizar ? 'activo' : ''}
+                onClick={() => onChange({ ...p, objetivo: 'max' })}
+              >
+                Maximizar utilidad
+              </button>
+            </div>
+            <label className="chip-check">
+              <input type="checkbox" checked={marcando} onChange={(e) => setMarcando(e.target.checked)} />
+              Marcar rutas prohibidas
+            </label>
+          </div>
+          {marcando && (
+            <p className="ayuda">
+              Haz clic en una celda para prohibir esa ruta (se muestra como M) o para volver a permitirla.
+            </p>
+          )}
+
           <div className="tabla-contenedor">
             <table className="tabla-editor">
               <thead>
@@ -113,11 +158,25 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
                     <th>{o}</th>
                     {p.destinos.map((d, j) => (
                       <td key={d}>
-                        <Numero
-                          valor={p.costos[i][j]}
-                          etiqueta={`Costo de ${o} a ${d}`}
-                          onChange={(v) => setCosto(i, j, v)}
-                        />
+                        {marcando || prohibida(i, j) ? (
+                          <button
+                            className={prohibida(i, j) ? 'celda-ruta prohibida' : 'celda-ruta'}
+                            aria-pressed={prohibida(i, j)}
+                            aria-label={`Ruta de ${o} a ${d}: ${prohibida(i, j) ? 'prohibida' : 'permitida'}`}
+                            title={
+                              prohibida(i, j) ? 'Ruta prohibida: clic para permitirla' : 'Clic para prohibir esta ruta'
+                            }
+                            onClick={() => alternarProhibida(i, j)}
+                          >
+                            {prohibida(i, j) ? 'M' : fmt(p.costos[i][j])}
+                          </button>
+                        ) : (
+                          <Numero
+                            valor={p.costos[i][j]}
+                            etiqueta={`${valor} de ${o} a ${d}`}
+                            onChange={(v) => setCosto(i, j, v)}
+                          />
+                        )}
                       </td>
                     ))}
                     <td className="total">
@@ -157,6 +216,14 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
             <dd>{fmt(suma(p.ofertas))}</dd>
             <dt>Demanda total</dt>
             <dd>{fmt(suma(p.demandas))}</dd>
+            <dt>Objetivo</dt>
+            <dd>{maximizar ? 'Maximizar' : 'Minimizar'}</dd>
+            {cuantasProhibidas > 0 && (
+              <>
+                <dt>Rutas prohibidas</dt>
+                <dd>{cuantasProhibidas}</dd>
+              </>
+            )}
           </dl>
           {errores.length > 0 ? (
             <ul className="aviso error">

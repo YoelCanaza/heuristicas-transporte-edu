@@ -11,6 +11,8 @@ interface Props {
   penalEditable?: PenalEditable;
   /** Si está presente, cada celda permitida tiene una casilla para escribir la cantidad. */
   cantidadEditable?: CantidadEditable;
+  /** Celdas que se resaltan como elegibles (p. ej. las de marginal 0 en el explorador de óptimos). */
+  resaltadas?: Celda[];
 }
 
 /** Casillas para que el estudiante escriba cuánto envía por cada ruta. */
@@ -30,7 +32,15 @@ export interface PenalEditable {
   onRevisar: (l: Linea) => void;
 }
 
-export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, penalEditable, cantidadEditable }: Props) {
+export function TablaTransporte({
+  problema: p,
+  paso,
+  onCeldaClick,
+  marcada,
+  penalEditable,
+  cantidadEditable,
+  resaltadas,
+}: Props) {
   const penal = (tipo: Linea['tipo'], k: number, nombre: string) => {
     const valor = (tipo === 'fila' ? paso.penalFila : paso.penalColumna)![k];
     if (valor == null) return '';
@@ -92,6 +102,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, pena
                   paso.celda?.i === i && paso.celda?.j === j ? 'actual' : '',
                   marcada?.i === i && marcada?.j === j ? 'marcada' : '',
                   prohibida ? 'prohibida' : '',
+                  resaltadas?.some((c) => c.i === i && c.j === j) ? 'resaltada' : '',
                 ];
                 return (
                   <td

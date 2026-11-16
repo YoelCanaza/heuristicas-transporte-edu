@@ -2632,3 +2632,27 @@ g.marca-serie {
 .tabla-mini td.distinta {
   box-shadow: inset 0 0 0 2px var(--ambar);
 }
+
+/* ───────── Explorador de óptimos alternativos ───────── */
+.tabla-transporte .celda.resaltada {
+  box-shadow: inset 0 0 0 2px var(--ambar);
+  background: var(--ambar-suave);
+}
+
+.tabla-transporte .celda.resaltada .marginal {
+  color: var(--tinta);
+  font-weight: 800;
+}
+
+.explorador {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--radio-sm);
+  background: var(--superficie-2);
+}
+
+.explorador p {
+  margin: 0;
+}

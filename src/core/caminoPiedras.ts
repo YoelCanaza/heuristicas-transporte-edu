@@ -298,7 +298,7 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
               : '') +
             `${p.utilidades ? 'Utilidad' : 'Costo'} total = ${desgloseCosto(p, sol.x)}.` +
             (ceros.length > 0
-              ? ` Las celdas ${ceros.join(', ')} tienen marginal 0: existen soluciones óptimas alternativas.`
+              ? ` ${ceros.length === 1 ? `La celda ${ceros[0]} tiene` : `Las celdas ${ceros.join(', ')} tienen`} marginal 0: puede haber soluciones óptimas alternativas.`
               : ''),
           marginales,
           ...uv,

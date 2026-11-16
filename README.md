@@ -40,6 +40,14 @@ aplicación solo revisa que no se pase de la oferta ni de la demanda. Con el rep
 lo compara con el óptimo y con la solución inicial de cada método: cuánto de más costó, a
 qué métodos igualó o superó y en qué rutas difiere de un reparto óptimo.
 
+### Óptimos alternativos
+
+Cuando la solución óptima tiene celdas vacías con costo marginal 0, el último paso de Aprender
+las marca en la tabla. Al hacer clic en una, esa celda entra a la base: se ve otra solución
+con el mismo costo, el camino cerrado que se usó y cuántas unidades se movieron. Se puede
+seguir explorando, deshacer o volver a la solución del método. Si θ = 0, la aplicación aclara
+que es la misma solución con otra base (degeneración), no un óptimo distinto.
+
 ### Vista de red
 
 En la pantalla Aprender, la opción «Vista de red» dibuja bajo la tabla la misma solución
@@ -123,7 +131,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-128 pruebas automatizadas. Entre ellas:
+133 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -135,6 +143,9 @@ permite probar toda la lógica sin interfaz.
   Noroeste), que el costo nunca sube entre iteraciones y los avisos con rutas prohibidas.
 - El reto inicial: reconoce el reparto óptimo del ejemplo de Taha, mide la diferencia de uno
   peor, señala dónde se envió de más y ningún reparto válido queda mejor que el óptimo.
+- Óptimos alternativos: cada cambio de base conserva ofertas, demandas, el total y la
+  optimalidad; volver por la celda que salió recupera la solución, y MODI da los mismos
+  marginales que el Camino de las Piedras.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores (penalizaciones, celda, cantidad, línea que se tacha, θ y celda
   que sale) y la

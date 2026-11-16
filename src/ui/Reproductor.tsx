@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { celdasAlternativas, mismaSolucion, pasarAOptimoAlternativo } from '../core/alternativos';
 import {
   diagnosticarAsignacion,
   diagnosticarCantidad,
@@ -147,9 +148,21 @@ export function Reproductor({
   const [ms, setMs] = useState(VELOCIDADES[1].ms);
   const [ejercicio, setEjercicio] = useState(() => ejercicioNuevo(0));
   const [puntaje, setPuntaje] = useState({ resueltas: 0, sinAyuda: 0 });
+  // Óptimos alternativos visitados desde el paso óptimo `idx`; se descartan al cambiar de paso.
+  const [exploracion, setExploracion] = useState<{ idx: number; pasos: Paso[]; aviso: string | null }>({
+    idx: -1,
+    pasos: [],
+    aviso: null,
+  });
 
   const ultimo = pasos.length - 1;
-  const paso = pasos[idx];
+  const explorados = exploracion.idx === idx ? exploracion.pasos : [];
+  const paso = explorados[explorados.length - 1] ?? pasos[idx];
+  const alternativas = celdasAlternativas(problema, paso);
+  // Soluciones distintas vistas (sin contar los cambios de base con θ = 0).
+  const distintas = [pasos[idx], ...explorados].filter(
+    (s, k, todas) => todas.findIndex((t) => mismaSolucion(t.x, s.x)) === k,
+  ).length;
   const ej = ejercicio.idx === idx ? ejercicio : ejercicioNuevo(idx);
 
   const objetivo = practica ? buscarObjetivo(pasos, idx) : null;
@@ -266,6 +279,23 @@ export function Reproductor({
     else if (analisis) visible = { ...paso, penalFila: analisis.penalFila, penalColumna: analisis.penalColumna };
   }
   const conClic = meta !== null && (fase === 'celda' || fase === 'trazo' || fase === 'salida');
+  const explorable = !conClic && (alternativas.length > 0 || explorados.length > 0);
+
+  const alExplorar = (c: Celda) => {
+    if (!alternativas.some((a) => a.i === c.i && a.j === c.j)) {
+      const basica = paso.basica[c.i][c.j];
+      setExploracion({
+        idx,
+        pasos: explorados,
+        aviso: basica
+          ? `${nombreCelda(problema, c)} ya está en la base. Elige una de las celdas marcadas.`
+          : `${nombreCelda(problema, c)} tiene costo marginal ${fmtCosto(problema, paso.marginales?.[c.i][c.j] ?? 0)}: hacerla entrar ${problema.utilidades ? 'bajaría la utilidad' : 'subiría el costo'}. Elige una celda con marginal 0.`,
+      });
+      return;
+    }
+    setExploracion({ idx, pasos: [...explorados, pasarAOptimoAlternativo(problema, paso, c)], aviso: null });
+  };
+  const avisoExploracion = exploracion.idx === idx ? exploracion.aviso : null;
 
   /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number, aviso: Aviso | null = null) => {
@@ -424,9 +454,10 @@ export function Reproductor({
           <TablaTransporte
             problema={problema}
             paso={visible}
-            onCeldaClick={conClic ? alClic : undefined}
+            onCeldaClick={conClic ? alClic : explorable ? alExplorar : undefined}
             marcada={ej.marcada}
             penalEditable={penalEditable}
+            resaltadas={explorable ? alternativas : undefined}
           />
           {red && <VistaRed problema={problema} paso={visible} />}
           <Leyenda paso={visible} problema={problema} />
@@ -445,6 +476,32 @@ export function Reproductor({
             {paso.ciclo && <Formula problema={problema} paso={paso} />}
           </div>
           {ej.aviso && <p className={ej.aviso.ok ? 'feedback ok' : 'feedback error'}>{ej.aviso.texto}</p>}
+          {explorable && (
+            <div className="explorador">
+              <p className="pregunta">Óptimos alternativos</p>
+              <p>
+                {alternativas.length > 0
+                  ? `Las celdas marcadas tienen costo marginal 0: pueden entrar a la base sin cambiar ${problema.utilidades ? 'la utilidad' : 'el costo'}. Haz clic en una para ver otra solución óptima.`
+                  : 'En esta base ninguna celda tiene marginal 0.'}
+              </p>
+              {avisoExploracion && <p className="feedback error">{avisoExploracion}</p>}
+              {explorados.length > 0 && (
+                <>
+                  <p className="ayuda">
+                    Soluciones óptimas distintas vistas: {distintas}. Cambios de base: {explorados.length}.
+                  </p>
+                  <div className="respuesta">
+                    <button onClick={() => setExploracion({ idx, pasos: explorados.slice(0, -1), aviso: null })}>
+                      Deshacer
+                    </button>
+                    <button onClick={() => setExploracion({ idx, pasos: [], aviso: null })}>
+                      Volver a la solución del método
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           {pregunta && (
             <div className="ejercicio">
               <p className="pregunta">{pregunta}</p>

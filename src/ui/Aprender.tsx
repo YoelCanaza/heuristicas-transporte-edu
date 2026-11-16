@@ -18,9 +18,11 @@ interface Props {
   optimizador: Optimizador;
   onMetodo: (m: MetodoInicial) => void;
   onOptimizador: (o: Optimizador) => void;
+  /** Abre el reto inicial: repartir sin seguir ningún método. */
+  onReparto: () => void;
 }
 
-export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizador }: Props) {
+export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizador, onReparto }: Props) {
   const [optimizarOn, setOptimizarOn] = useState(true);
   const [detallado, setDetallado] = useState(false);
   const [practica, setPractica] = useState(false);
@@ -54,6 +56,14 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
           </p>
         </div>
         <div className="segmentado" role="radiogroup" aria-label="Método">
+          <button
+            role="radio"
+            aria-checked={false}
+            title="Reto inicial: reparte sin seguir ningún método y compárate con el óptimo"
+            onClick={onReparto}
+          >
+            Tu reparto
+          </button>
           {METODOS.map((k) => (
             <button
               key={k}

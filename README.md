@@ -32,6 +32,14 @@ cómo se llega a un problema de minimización equivalente.
 
 La página de Teoría explica ambas variantes, con sus pasos y errores frecuentes.
 
+### Reto inicial: reparte a tu manera
+
+Antes de ver ningún método, el estudiante puede intentarlo solo. En Aprender, la opción
+«Tu reparto» muestra la tabla con una casilla por ruta: se escribe cuánto se envía y la
+aplicación solo revisa que no se pase de la oferta ni de la demanda. Con el reparto completo,
+lo compara con el óptimo y con la solución inicial de cada método: cuánto de más costó, a
+qué métodos igualó o superó y en qué rutas difiere de un reparto óptimo.
+
 ### Vista de red
 
 En la pantalla Aprender, la opción «Vista de red» dibuja bajo la tabla la misma solución
@@ -115,7 +123,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-117 pruebas automatizadas. Entre ellas:
+128 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -125,6 +133,8 @@ permite probar toda la lógica sin interfaz.
   soluciones y llegan al mismo óptimo: dos cálculos distintos que se verifican entre sí.
 - El comparador: los recorridos del ejemplo de Taha (520 → 475 → 475 → 435 desde Esquina
   Noroeste), que el costo nunca sube entre iteraciones y los avisos con rutas prohibidas.
+- El reto inicial: reconoce el reparto óptimo del ejemplo de Taha, mide la diferencia de uno
+  peor, señala dónde se envió de más y ningún reparto válido queda mejor que el óptimo.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores (penalizaciones, celda, cantidad, línea que se tacha, θ y celda
   que sale) y la

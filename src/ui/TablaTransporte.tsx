@@ -1,5 +1,5 @@
 import type { Celda, Linea, Paso, Problema } from '../core/tipos';
-import { fmt, fmtCosto } from '../core/util';
+import { EPS, fmt, fmtCosto } from '../core/util';
 
 interface Props {
   problema: Problema;
@@ -9,6 +9,16 @@ interface Props {
   marcada?: Celda | null;
   /** Si está presente, las penalizaciones se escriben a mano en lugar de mostrarse. */
   penalEditable?: PenalEditable;
+  /** Si está presente, cada celda permitida tiene una casilla para escribir la cantidad. */
+  cantidadEditable?: CantidadEditable;
+}
+
+/** Casillas para que el estudiante escriba cuánto envía por cada ruta. */
+export interface CantidadEditable {
+  texto: (c: Celda) => string;
+  /** Lo escrito no es una cantidad válida. */
+  invalida: (c: Celda) => boolean;
+  onCambio: (c: Celda, texto: string) => void;
 }
 
 /** Casillas para que el estudiante escriba las penalizaciones de Vogel. */
@@ -20,7 +30,7 @@ export interface PenalEditable {
   onRevisar: (l: Linea) => void;
 }
 
-export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, penalEditable }: Props) {
+export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, penalEditable, cantidadEditable }: Props) {
   const penal = (tipo: Linea['tipo'], k: number, nombre: string) => {
     const valor = (tipo === 'fila' ? paso.penalFila : paso.penalColumna)![k];
     if (valor == null) return '';
@@ -92,12 +102,24 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, pena
                         ? `${o} → ${d}: ruta prohibida (costo M = ${fmt(p.costos[i][j])})`
                         : p.utilidades
                           ? `${o} → ${d}: utilidad ${fmt(p.utilidades[i][j])}, costo de oportunidad ${fmt(p.costos[i][j])}`
-                          : `${o} → ${d}: costo ${fmt(p.costos[i][j])}`
+                          : `${o} → ${d}: ${p.objetivo === 'max' ? 'utilidad' : 'costo'} ${fmt(p.costos[i][j])}`
                     }
                   >
                     <span className="costo">{prohibida ? 'M' : fmt(p.costos[i][j])}</span>
                     {signo && <span className="signo">{signo}</span>}
-                    {basica ? (
+                    {cantidadEditable ? (
+                      prohibida ? null : (
+                        <input
+                          className={`cantidad-entrada ${cantidadEditable.invalida({ i, j }) ? 'mal' : ''}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={cantidadEditable.texto({ i, j })}
+                          aria-label={`Unidades de ${o} a ${d}`}
+                          aria-invalid={cantidadEditable.invalida({ i, j })}
+                          onChange={(e) => cantidadEditable.onCambio({ i, j }, e.target.value)}
+                        />
+                      )
+                    ) : basica ? (
                       <span className="valor">{paso.x[i][j] === 0 ? 'ε' : fmt(paso.x[i][j])}</span>
                     ) : marginal != null ? (
                       <span className={marginal < 0 ? 'marginal negativo' : 'marginal'}>{fmtCosto(p, marginal)}</span>
@@ -114,7 +136,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, pena
                   </td>
                 );
               })}
-              <td className={`total ${paso.filaTachada?.[i] ? 'tachada' : ''}`}>
+              <td className={`total ${paso.filaTachada?.[i] ? 'tachada' : ''} ${exceso(paso.ofertaRestante?.[i])}`}>
                 <Cantidad original={p.ofertas[i]} restante={paso.ofertaRestante?.[i]} />
               </td>
               {conPenal && <td className={elegida('fila', i) ? 'penal elegida' : 'penal'}>{penal('fila', i, o)}</td>}
@@ -160,6 +182,11 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, pena
       </table>
     </div>
   );
+}
+
+/** Clase de un total de oferta o demanda del que se repartió más de lo que hay. */
+function exceso(restante?: number): string {
+  return restante !== undefined && restante < -EPS ? 'exceso' : '';
 }
 
 function Cantidad({ original, restante }: { original: number; restante?: number }) {

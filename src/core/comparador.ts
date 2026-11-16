@@ -35,6 +35,8 @@ export interface ComparacionMetodos {
   optimo: number | null;
   /** La solución final todavía usa rutas prohibidas: el problema no tiene solución válida. */
   sinSolucion: boolean;
+  /** Una solución con el total óptimo; null en los mismos casos que `optimo`. */
+  solucionOptima: Solucion | null;
   interpretacion: string;
 }
 
@@ -62,6 +64,7 @@ export function compararMetodos(original: Problema): ComparacionMetodos {
   // Se asignan dentro del recorrido; la forma `as` evita que TypeScript los dé por constantes.
   let optimo = null as number | null;
   let sinSolucion = false as boolean;
+  let solucionOptima = null as Solucion | null;
 
   const parciales = METODOS.map((metodo) => {
     const inicial = resolverMetodo(original, metodo);
@@ -73,7 +76,10 @@ export function compararMetodos(original: Problema): ComparacionMetodos {
     ];
     if (opt.optimo) {
       if (trayectoria[trayectoria.length - 1].prohibida) sinSolucion = true;
-      else optimo = opt.costo;
+      else {
+        optimo = opt.costo;
+        solucionOptima = opt.solucion;
+      }
     }
     return {
       metodo,
@@ -96,7 +102,7 @@ export function compararMetodos(original: Problema): ComparacionMetodos {
     };
   });
 
-  const resultado = { problema, filas, optimo, sinSolucion };
+  const resultado = { problema, filas, optimo, sinSolucion, solucionOptima };
   return { ...resultado, interpretacion: interpretar(resultado) };
 }
 

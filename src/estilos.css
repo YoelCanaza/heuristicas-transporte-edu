@@ -2575,3 +2575,60 @@ g.marca-serie {
   cursor: pointer;
   font-weight: 700;
 }
+
+/* ───────── Reto inicial: tu reparto ───────── */
+.tabla-transporte .cantidad-entrada {
+  width: 3.9rem;
+  min-height: 38px;
+  margin-top: 1rem;
+  padding: 0.2rem;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-transporte .cantidad-entrada.mal {
+  border-color: var(--coral);
+  background: var(--coral-suave);
+}
+
+.tabla-transporte td.total.exceso {
+  background: var(--coral-suave);
+  color: var(--coral);
+  box-shadow: inset 0 0 0 2px var(--coral);
+}
+
+.reparto-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-top: 1.25rem;
+}
+
+.reparto-veredicto {
+  display: grid;
+  gap: 1rem;
+}
+
+.reparto-veredicto .aviso {
+  margin: 0;
+}
+
+.reparto-veredicto .aviso p {
+  margin: 0;
+}
+
+.reparto-veredicto .aviso p + p {
+  margin-top: 0.6rem;
+}
+
+.tabla-simple tr.referencia td {
+  color: var(--apagado);
+}
+
+.tabla-mini td.distinta {
+  box-shadow: inset 0 0 0 2px var(--ambar);
+}

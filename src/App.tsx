@@ -7,6 +7,7 @@ import { Comparar } from './ui/Comparar';
 import { EditorProblema } from './ui/EditorProblema';
 import { Inicio } from './ui/Inicio';
 import { Laboratorio } from './ui/Laboratorio';
+import { Reparto } from './ui/Reparto';
 import { Teoria } from './ui/Teoria';
 import { useRuta } from './ui/ruta';
 import type { Vista } from './ui/ruta';
@@ -51,6 +52,8 @@ export function App() {
   const [tema, setTema] = useState<Tema>(temaInicial);
   const valido = validar(problema).length === 0;
   const { vista } = ruta;
+  // El reto inicial es parte de Aprender: no tiene entrada propia en el menú.
+  const seccion = vista === 'reparto' ? 'aprender' : vista;
 
   useEffect(() => {
     document.documentElement.dataset.theme = tema;
@@ -62,7 +65,7 @@ export function App() {
   }, [tema]);
 
   useEffect(() => {
-    const etiqueta = VISTAS.find((v) => v.id === vista)?.etiqueta;
+    const etiqueta = vista === 'reparto' ? 'Tu reparto' : VISTAS.find((v) => v.id === vista)?.etiqueta;
     document.title = etiqueta && vista !== 'inicio' ? `${etiqueta} · HeurisTrans` : 'HeurisTrans';
   }, [vista]);
 
@@ -90,8 +93,8 @@ export function App() {
           {VISTAS.map((v) => (
             <button
               key={v.id}
-              className={vista === v.id ? 'activo' : ''}
-              aria-current={vista === v.id ? 'page' : undefined}
+              className={seccion === v.id ? 'activo' : ''}
+              aria-current={seccion === v.id ? 'page' : undefined}
               onClick={() => ir({ vista: v.id })}
             >
               {v.etiqueta}
@@ -151,7 +154,7 @@ export function App() {
         {vista === 'teoria' && (
           <Teoria onPractica={(metodo, optimizador) => ir({ vista: 'aprender', metodo, optimizador })} />
         )}
-        {(vista === 'aprender' || vista === 'comparar' || vista === 'laboratorio') &&
+        {(vista === 'aprender' || vista === 'reparto' || vista === 'comparar' || vista === 'laboratorio') &&
           (valido ? (
             vista === 'aprender' ? (
               <Aprender
@@ -160,6 +163,13 @@ export function App() {
                 optimizador={ruta.optimizador}
                 onMetodo={(metodo) => ir({ metodo })}
                 onOptimizador={(optimizador) => ir({ optimizador })}
+                onReparto={() => ir({ vista: 'reparto' })}
+              />
+            ) : vista === 'reparto' ? (
+              <Reparto
+                key={JSON.stringify(problema)}
+                problema={problema}
+                onMetodo={(metodo) => ir({ vista: 'aprender', metodo })}
               />
             ) : vista === 'comparar' ? (
               <Comparar problema={problema} onMetodo={(metodo) => ir({ vista: 'aprender', metodo })} />

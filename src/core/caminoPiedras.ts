@@ -330,6 +330,8 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
     const marginal = marginales[entrada.i][entrada.j]!;
     const negativas = ciclo.filter((_, k) => k % 2 === 1);
     const theta = Math.min(...negativas.map((c) => sol.x[c.i][c.j]));
+    // Si varias celdas − llegan a 0, sale la primera del camino; las demás quedan básicas con ε.
+    const salida = negativas.find((c) => sol.x[c.i][c.j] - theta <= EPS)!;
     const costoAntes = fmtTotal(p, sol.x);
 
     pasos.push(
@@ -344,6 +346,8 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
         celda: entrada,
         ciclo,
         marginales,
+        theta,
+        sale: salida,
         ...uv,
       }),
     );
@@ -353,7 +357,6 @@ export function optimizar(p: Problema, inicial: Solucion, opciones: OpcionesOpti
       sol.x[c.i][c.j] = Math.abs(nuevo) <= EPS ? 0 : nuevo;
     });
     sol.basica[entrada.i][entrada.j] = true;
-    const salida = negativas.find((c) => sol.x[c.i][c.j] === 0)!;
     sol.basica[salida.i][salida.j] = false;
 
     pasos.push(

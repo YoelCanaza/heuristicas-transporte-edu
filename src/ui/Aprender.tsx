@@ -24,6 +24,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   const [optimizarOn, setOptimizarOn] = useState(true);
   const [detallado, setDetallado] = useState(false);
   const [practica, setPractica] = useState(false);
+  const [completa, setCompleta] = useState(true);
 
   const { balanceado, pasos, fases } = useMemo(() => {
     const inicial = resolverMetodo(problema, metodo);
@@ -98,6 +99,15 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
           <input type="checkbox" checked={practica} onChange={(e) => setPractica(e.target.checked)} />
           Modo práctica
         </label>
+        {practica && (
+          <label
+            className="chip-check"
+            title="Además de la celda: la cantidad, la línea que se tacha, θ y la celda que sale"
+          >
+            <input type="checkbox" checked={completa} onChange={(e) => setCompleta(e.target.checked)} />
+            Preguntar cada decisión
+          </label>
+        )}
       </div>
 
       <div className="teorias">
@@ -106,11 +116,12 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
       </div>
 
       <Reproductor
-        key={`${metodo}-${optimizador}-${optimizarOn}-${detallado}-${practica}-${JSON.stringify(problema)}`}
+        key={`${metodo}-${optimizador}-${optimizarOn}-${detallado}-${practica}-${completa}-${JSON.stringify(problema)}`}
         problema={balanceado}
         pasos={pasos}
         fases={fases}
         practica={practica}
+        completa={completa}
         metodo={metodo}
       />
     </section>

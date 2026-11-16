@@ -71,6 +71,10 @@ export interface Paso {
   /** Potenciales del método MODI: u por fila y v por columna (u + v = costo en las básicas). */
   u?: number[];
   v?: number[];
+  /** En el paso en que entra una celda: cantidad que se mueve por el camino cerrado. */
+  theta?: number;
+  /** En el paso en que entra una celda: celda que sale de la base. */
+  sale?: Celda;
   costoTotal: number;
 }
 

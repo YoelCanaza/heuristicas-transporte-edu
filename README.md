@@ -41,6 +41,10 @@ En la pantalla Aprender, el modo práctica convierte la demostración en ejercic
 - En el Camino de las Piedras predice qué celda entra a la base y después **traza a mano su
   camino cerrado**, haciendo clic en las celdas donde gira. Con MODI, la tabla muestra u y v
   y el estudiante calcula costo − u − v para decidir qué celda entra.
+- Con «Preguntar cada decisión» (activado por omisión) el estudiante resuelve el paso
+  entero: tras elegir la celda escribe **cuántas unidades se asignan** y dice **qué línea se
+  tacha**; tras trazar el camino cerrado calcula **θ** y señala **qué celda sale de la
+  base**. Así puede resolver un problema completo a mano, de la tabla vacía al óptimo.
 - Cada error recibe un diagnóstico: la aplicación reconoce qué regla siguió el estudiante
   (por ejemplo, elegir la celda más barata en Esquina Noroeste) y explica la diferencia.
 - Hay dos pistas graduadas por ejercicio y un contador de ejercicios resueltos sin ayuda.
@@ -102,7 +106,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-96 pruebas automatizadas. Entre ellas:
+106 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -113,7 +117,8 @@ permite probar toda la lógica sin interfaz.
 - El comparador: los recorridos del ejemplo de Taha (520 → 475 → 475 → 435 desde Esquina
   Noroeste), que el costo nunca sube entre iteraciones y los avisos con rutas prohibidas.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
-- El diagnóstico de errores y la validación del trazado del camino cerrado.
+- El diagnóstico de errores (celda, cantidad, línea que se tacha, θ y celda que sale) y la
+  validación del trazado del camino cerrado.
 - Maximización: un caso 2×2 resuelto a mano y, en problemas aleatorios, la misma utilidad
   óptima desde los tres métodos. Rutas prohibidas: el óptimo las evita, coincide con poner
   a mano un costo enorme y se avisa cuando no hay solución sin ellas.

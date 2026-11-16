@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
-import { diagnosticarAsignacion, diagnosticarEntrada, recordarCriterio, validarTrazo } from '../core/diagnostico';
+import {
+  diagnosticarAsignacion,
+  diagnosticarCantidad,
+  diagnosticarEntrada,
+  diagnosticarSalida,
+  diagnosticarTachado,
+  diagnosticarTheta,
+  empataSalida,
+  recordarCriterio,
+  restantes,
+  validarTrazo,
+} from '../core/diagnostico';
+import type { Tachado } from '../core/diagnostico';
 import type { MetodoInicial } from '../core/metodos';
 import type { Celda, Paso, Problema } from '../core/tipos';
 import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
@@ -18,6 +30,8 @@ interface Props {
   pasos: Paso[];
   fases: Fase[];
   practica?: boolean;
+  /** En modo práctica, preguntar también la cantidad, la línea que se tacha, θ y la celda que sale. */
+  completa?: boolean;
   /** Método de construcción en curso; permite diagnosticar los errores del modo práctica. */
   metodo?: MetodoInicial;
 }
@@ -67,11 +81,19 @@ interface Aviso {
   texto: string;
 }
 
+/**
+ * Preguntas de un mismo paso, en orden. En una asignación: celda → cantidad → tachar.
+ * Al entrar una celda a la base: celda → trazo → theta → salida.
+ */
+type FaseEjercicio = 'celda' | 'cantidad' | 'tachar' | 'trazo' | 'theta' | 'salida';
+
 /** Estado del ejercicio de práctica asociado a un paso; al cambiar de paso se descarta solo. */
 interface Ejercicio {
   idx: number;
-  fase: 'celda' | 'trazo';
+  fase: FaseEjercicio;
   trazo: Celda[];
+  /** Texto escrito en la casilla de respuesta (cantidad o θ). */
+  texto: string;
   pistas: number;
   fallos: number;
   marcada: Celda | null;
@@ -82,6 +104,7 @@ const ejercicioNuevo = (idx: number, aviso: Aviso | null = null): Ejercicio => (
   idx,
   fase: 'celda',
   trazo: [],
+  texto: '',
   pistas: 0,
   fallos: 0,
   marcada: null,
@@ -97,7 +120,7 @@ function buscarObjetivo(pasos: Paso[], idx: number): number | null {
   return s?.celda && (s.tipo === 'asignacion' || s.tipo === 'ciclo') ? k : null;
 }
 
-export function Reproductor({ problema, pasos, fases, practica = false, metodo }: Props) {
+export function Reproductor({ problema, pasos, fases, practica = false, completa = false, metodo }: Props) {
   const [idx, setIdx] = useState(0);
   const [reproduciendo, setReproduciendo] = useState(false);
   const [ms, setMs] = useState(VELOCIDADES[1].ms);
@@ -113,43 +136,94 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
   // Paso con las penalizaciones que justifican la elección (Vogel), si existe.
   const analisis = paso.tipo === 'penalizaciones' ? paso : objetivo === idx + 2 ? pasos[idx + 1] : null;
 
-  const pregunta = !meta
-    ? null
-    : ej.fase === 'trazo'
-      ? `Traza el camino cerrado de ${nombreCelda(problema, meta.celda!)}: haz clic, en orden, en las piedras donde gira.`
-      : meta.tipo === 'asignacion'
-        ? '¿Qué celda elegirá el método ahora? Haz clic en ella.'
-        : '¿Qué celda entrará a la base? Haz clic en ella.';
+  const nombreMeta = meta ? nombreCelda(problema, meta.celda!) : '';
+  const resto = meta ? restantes(problema, paso, meta.celda!) : null;
+  const origenMeta = meta ? problema.origenes[meta.celda!.i] : '';
+  const destinoMeta = meta ? problema.destinos[meta.celda!.j] : '';
 
-  const textosPista: string[] = !meta
-    ? []
-    : ej.fase === 'trazo'
-      ? [
+  const PREGUNTAS: Record<FaseEjercicio, string> = {
+    celda:
+      meta?.tipo === 'ciclo'
+        ? '¿Qué celda entrará a la base? Haz clic en ella.'
+        : '¿Qué celda elegirá el método ahora? Haz clic en ella.',
+    cantidad: `¿Cuántas unidades se asignan a ${nombreMeta}?`,
+    tachar: `Después de asignar en ${nombreMeta}, ¿qué se tacha?`,
+    trazo: `Traza el camino cerrado de ${nombreMeta}: haz clic, en orden, en las piedras donde gira.`,
+    theta: '¿Cuánto vale θ, la cantidad que se moverá por el camino?',
+    salida: '¿Qué celda saldrá de la base? Haz clic en ella.',
+  };
+  const pregunta = meta ? PREGUNTAS[ej.fase] : null;
+
+  const pistasDe = (): string[] => {
+    if (!meta || !resto) return [];
+    const q = Math.min(resto.oferta, resto.demanda);
+    switch (ej.fase) {
+      case 'cantidad':
+        return [
+          'No se puede enviar más de lo que le queda al origen ni más de lo que le falta al destino. Se envía lo máximo posible.',
+          `A ${origenMeta} le quedan ${fmt(resto.oferta)} y a ${destinoMeta} le faltan ${fmt(resto.demanda)}.`,
+        ];
+      case 'tachar':
+        return [
+          'Se tacha la línea que quedó en 0 después de asignar. Si las dos quedan en 0 a la vez, solo se tacha una: la fila, salvo que sea la última.',
+          `Después de asignar, a ${origenMeta} le quedan ${fmt(resto.oferta - q)} y a ${destinoMeta} le faltan ${fmt(resto.demanda - q)}.`,
+        ];
+      case 'trazo':
+        return [
           'Parte de la celda que entra y salta solo a celdas básicas, alternando un movimiento horizontal y uno vertical, hasta poder volver al inicio.',
           `El camino tiene ${meta.ciclo!.length} celdas, contando la inicial.`,
-        ]
-      : meta.tipo === 'ciclo'
-        ? [
-            meta.u
-              ? 'Calcula costo − u − v en cada celda vacía con los valores que muestra la tabla. Entra la de resultado más negativo.'
-              : 'Calcula el costo marginal de cada celda vacía recorriendo su camino cerrado. Entra la de marginal más negativo.',
-            'Ahora la tabla muestra el costo marginal de cada celda vacía.',
-          ]
-        : [
-            metodo ? recordarCriterio(metodo, !analisis) : 'Aplica el criterio del método a las celdas sin tachar.',
-            analisis
-              ? 'Ahora la tabla muestra el valor de cada fila y columna.'
-              : `La celda está en la fila ${problema.origenes[meta.celda!.i]}.`,
-          ];
+        ];
+      case 'theta':
+        return [
+          'θ es lo máximo que se puede restar en todas las celdas con signo − sin que ninguna quede negativa.',
+          `Las celdas con signo − tienen: ${meta
+            .ciclo!.filter((_, k) => k % 2 === 1)
+            .map((c) => fmt(paso.x[c.i][c.j]))
+            .join(', ')}.`,
+        ];
+      case 'salida':
+        return [
+          `Resta θ = ${fmt(meta.theta!)} en cada celda con signo −. Sale la que queda en 0.`,
+          `La celda que sale está en la fila ${problema.origenes[meta.sale!.i]}.`,
+        ];
+      case 'celda':
+        return meta.tipo === 'ciclo'
+          ? [
+              meta.u
+                ? 'Calcula costo − u − v en cada celda vacía con los valores que muestra la tabla. Entra la de resultado más negativo.'
+                : 'Calcula el costo marginal de cada celda vacía recorriendo su camino cerrado. Entra la de marginal más negativo.',
+              'Ahora la tabla muestra el costo marginal de cada celda vacía.',
+            ]
+          : [
+              metodo ? recordarCriterio(metodo, !analisis) : 'Aplica el criterio del método a las celdas sin tachar.',
+              analisis
+                ? 'Ahora la tabla muestra el valor de cada fila y columna.'
+                : `La celda está en la fila ${origenMeta}.`,
+            ];
+    }
+  };
+  const textosPista = pistasDe();
 
   // Lo que muestra la tabla: el paso actual más las ayudas del ejercicio.
   let visible = paso;
   if (meta && ej.fase === 'trazo') {
     visible = { ...paso, celda: meta.celda, ciclo: ej.trazo, marginales: meta.marginales };
+  } else if (meta && (ej.fase === 'theta' || ej.fase === 'salida')) {
+    visible = { ...paso, celda: meta.celda, ciclo: meta.ciclo, marginales: meta.marginales };
+  } else if (meta && (ej.fase === 'cantidad' || ej.fase === 'tachar')) {
+    // La celda ya se acertó: se muestra el análisis que la justifica y, al tachar, la cantidad ya asignada.
+    visible = {
+      ...(ej.fase === 'tachar' ? { ...paso, x: meta.x, basica: meta.basica } : paso),
+      celda: meta.celda,
+      penalFila: analisis?.penalFila,
+      penalColumna: analisis?.penalColumna,
+      lineaElegida: analisis?.lineaElegida,
+    };
   } else if (meta && ej.pistas >= 2) {
     if (meta.tipo === 'ciclo') visible = { ...paso, marginales: meta.marginales };
     else if (analisis) visible = { ...paso, penalFila: analisis.penalFila, penalColumna: analisis.penalColumna };
   }
+  const conClic = meta !== null && (ej.fase === 'celda' || ej.fase === 'trazo' || ej.fase === 'salida');
 
   /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number, aviso: Aviso | null = null) => {
@@ -183,8 +257,12 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
   const contarResuelta = (sinAyuda: boolean) =>
     setPuntaje((s) => ({ resueltas: s.resueltas + 1, sinAyuda: s.sinAyuda + (sinAyuda ? 1 : 0) }));
 
-  const fallar = (c: Celda, texto: string) =>
+  const fallar = (texto: string, c: Celda | null = null) =>
     setEjercicio({ ...ej, fallos: ej.fallos + 1, marcada: c, aviso: { ok: false, texto } });
+
+  /** Pasa a la siguiente pregunta del mismo paso, con pistas y fallos en cero. */
+  const pasarA = (fase: FaseEjercicio, texto: string, trazo: Celda[] = []) =>
+    setEjercicio({ ...ejercicioNuevo(idx, { ok: true, texto }), fase, trazo });
 
   const alClic = (c: Celda) => {
     if (!meta || objetivo === null) return;
@@ -192,36 +270,70 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
 
     if (ej.fase === 'trazo') {
       const r = validarTrazo(paso.basica, meta.ciclo!, ej.trazo, c);
-      if (!r.ok) return fallar(c, r.motivo);
+      if (!r.ok) return fallar(r.motivo, c);
       if (!r.completo) return setEjercicio({ ...ej, trazo: [...ej.trazo, c], marcada: null, aviso: null });
       contarResuelta(limpio);
-      return ir(objetivo, {
-        ok: true,
-        texto: '¡Camino cerrado correcto! Fíjate en los signos: + donde se suma θ y − donde se resta.',
-      });
+      const texto = '¡Camino cerrado correcto! Fíjate en los signos: + donde se suma θ y − donde se resta.';
+      return completa ? pasarA('theta', texto) : ir(objetivo, { ok: true, texto });
+    }
+
+    if (ej.fase === 'salida') {
+      if (empataSalida(meta, c)) {
+        // Empate en θ: su respuesta es válida, aunque la traza saque otra de las empatadas.
+        contarResuelta(limpio);
+        return ir(objetivo, {
+          ok: true,
+          texto:
+            `¡Correcto! ${nombreCelda(problema, c)} queda en 0. También queda en 0 ${nombreCelda(problema, meta.sale!)}: ` +
+            `cualquiera de las dos puede salir, pero solo una. Aquí sale ${nombreCelda(problema, meta.sale!)} y la otra sigue en la base con ε.`,
+        });
+      }
+      const error = diagnosticarSalida(problema, meta, c);
+      if (error) return fallar(error, c);
+      contarResuelta(limpio);
+      return ir(objetivo, { ok: true, texto: `¡Correcto! ${nombreCelda(problema, c)} queda en 0 y sale de la base.` });
     }
 
     const correcta = meta.celda!;
     if (c.i === correcta.i && c.j === correcta.j) {
       contarResuelta(limpio);
-      if (meta.tipo === 'ciclo') {
-        return setEjercicio({
-          ...ejercicioNuevo(idx, { ok: true, texto: '¡Correcto! Esa es la celda que entra a la base.' }),
-          fase: 'trazo',
-          trazo: [c],
-        });
-      }
-      return ir(objetivo, { ok: true, texto: '¡Correcto!' });
+      if (meta.tipo === 'ciclo') return pasarA('trazo', '¡Correcto! Esa es la celda que entra a la base.', [c]);
+      return completa
+        ? pasarA('cantidad', '¡Correcto! Esa es la celda que elige el método.')
+        : ir(objetivo, { ok: true, texto: '¡Correcto!' });
     }
 
     fallar(
-      c,
       meta.tipo === 'ciclo'
         ? diagnosticarEntrada(problema, paso, meta.marginales!, correcta, c)
         : metodo
           ? diagnosticarAsignacion(problema, paso, analisis, correcta, c, metodo)
           : 'No es esa celda. Revisa el criterio del método.',
+      c,
     );
+  };
+
+  /** Respuesta escrita: la cantidad a asignar o el valor de θ. */
+  const alResponderNumero = () => {
+    if (!meta || ej.texto.trim() === '') return;
+    const valor = Number(ej.texto.trim().replace(',', '.'));
+    const limpio = ej.fallos === 0 && ej.pistas === 0;
+    const error =
+      ej.fase === 'cantidad'
+        ? diagnosticarCantidad(problema, paso, meta.celda!, valor)
+        : diagnosticarTheta(problema, meta, valor);
+    if (error) return fallar(error);
+    contarResuelta(limpio);
+    if (ej.fase === 'cantidad') return pasarA('tachar', `¡Correcto! Se asignan ${fmt(valor)} unidades.`);
+    pasarA('salida', `¡Correcto! θ = ${fmt(valor)}.`);
+  };
+
+  const alTachar = (respuesta: Tachado) => {
+    if (!meta || objetivo === null) return;
+    const error = diagnosticarTachado(problema, paso, meta, respuesta);
+    if (error) return fallar(error);
+    contarResuelta(ej.fallos === 0 && ej.pistas === 0);
+    ir(objetivo, { ok: true, texto: '¡Correcto! Así queda la tabla después de la asignación.' });
   };
 
   const mostrarRespuesta = () => {
@@ -239,7 +351,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
           <TablaTransporte
             problema={problema}
             paso={visible}
-            onCeldaClick={meta ? alClic : undefined}
+            onCeldaClick={conClic ? alClic : undefined}
             marcada={ej.marcada}
           />
           <Leyenda paso={visible} problema={problema} />
@@ -261,6 +373,35 @@ export function Reproductor({ problema, pasos, fases, practica = false, metodo }
           {pregunta && (
             <div className="ejercicio">
               <p className="pregunta">{pregunta}</p>
+              {(ej.fase === 'cantidad' || ej.fase === 'theta') && (
+                <form
+                  className="respuesta"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    alResponderNumero();
+                  }}
+                >
+                  <input
+                    key={ej.fase}
+                    type="text"
+                    inputMode="decimal"
+                    autoFocus
+                    value={ej.texto}
+                    onChange={(e) => setEjercicio({ ...ej, texto: e.target.value })}
+                    aria-label={ej.fase === 'cantidad' ? 'Cantidad que se asigna' : 'Valor de θ'}
+                  />
+                  <button className="primario" disabled={ej.texto.trim() === ''}>
+                    Comprobar
+                  </button>
+                </form>
+              )}
+              {ej.fase === 'tachar' && (
+                <div className="respuesta">
+                  <button onClick={() => alTachar('fila')}>Fila {origenMeta}</button>
+                  <button onClick={() => alTachar('columna')}>Columna {destinoMeta}</button>
+                  <button onClick={() => alTachar('ambas')}>Las dos</button>
+                </div>
+              )}
               {textosPista.slice(0, ej.pistas).map((t, k) => (
                 <p key={k} className="pista">
                   <strong>Pista {k + 1}.</strong> {t}

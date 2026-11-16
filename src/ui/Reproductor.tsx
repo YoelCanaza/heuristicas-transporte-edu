@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { REFLEXION } from '../contenido/reflexion';
 import { celdasAlternativas, mismaSolucion, pasarAOptimoAlternativo } from '../core/alternativos';
 import {
   diagnosticarAsignacion,
@@ -329,6 +330,16 @@ export function Reproductor({
   );
   const rutasMostradas = miopia?.rutas.slice(0, 3) ?? [];
   const textoMiopia = TEXTO_MIOPIA[metodo ?? 'propia'];
+
+  // Preguntas de reflexión: al terminar la construcción, las del método; al terminar la optimización, las de MODI o de Piedras.
+  const preguntasReflexion =
+    pregunta !== null
+      ? null
+      : enFin && metodo
+        ? REFLEXION[metodo]
+        : (paso.tipo === 'optimo' || paso.tipo === 'limite') && idx === ultimo
+          ? REFLEXION[pasos[idx].u ? 'modi' : 'piedras']
+          : null;
 
   /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number, aviso: Aviso | null = null) => {
@@ -683,6 +694,19 @@ export function Reproductor({
           </div>
         </div>
       </section>
+
+      {preguntasReflexion && (
+        <section className="tarjeta reflexion" aria-label="Preguntas para pensar">
+          <h2 className="titulo-seccion">Para pensar</h2>
+          <p className="ayuda">Intenta responder antes de abrir cada respuesta.</p>
+          {preguntasReflexion.map((q) => (
+            <details key={q.pregunta} className="teoria">
+              <summary>{q.pregunta}</summary>
+              <p>{q.respuesta}</p>
+            </details>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

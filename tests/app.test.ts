@@ -41,3 +41,16 @@ describe('esProblema', () => {
     expect(esProblema(dato)).toBe(false);
   });
 });
+
+describe('preguntas de reflexión', () => {
+  it('cada método y cada optimizador tiene al menos cuatro preguntas con respuesta', async () => {
+    const { REFLEXION } = await import('../src/contenido/reflexion');
+    for (const tema of ['noroeste', 'costoMinimo', 'vogel', 'piedras', 'modi'] as const) {
+      expect(REFLEXION[tema].length).toBeGreaterThanOrEqual(4);
+      for (const q of REFLEXION[tema]) {
+        expect(q.pregunta.trim().endsWith('?')).toBe(true);
+        expect(q.respuesta.length).toBeGreaterThan(40);
+      }
+    }
+  });
+});

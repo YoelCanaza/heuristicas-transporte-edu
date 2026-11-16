@@ -48,6 +48,13 @@ cerró otra más barata de su fila o columna. Cada una explica qué ruta barata 
 disponible, qué asignación la cerró y permite ir a ese paso. En Costo Mínimo se titula «El
 precio de la miopía»; en los otros métodos y en el laboratorio cambia el título.
 
+### Preguntas para pensar
+
+Al terminar la construcción, bajo el reproductor aparecen cuatro preguntas sobre el método
+(por qué funciona, qué ignora, qué pasa si cambia el orden de la tabla…), cada una con su
+respuesta desplegable. Al terminar la optimización aparecen las del Camino de las Piedras o
+las de MODI.
+
 ### Óptimos alternativos
 
 Cuando la solución óptima tiene celdas vacías con costo marginal 0, el último paso de Aprender
@@ -139,7 +146,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-138 pruebas automatizadas. Entre ellas:
+139 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.

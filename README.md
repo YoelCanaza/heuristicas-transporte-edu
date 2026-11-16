@@ -32,6 +32,13 @@ cómo se llega a un problema de minimización equivalente.
 
 La página de Teoría explica ambas variantes, con sus pasos y errores frecuentes.
 
+### Vista de red
+
+En la pantalla Aprender, la opción «Vista de red» dibuja bajo la tabla la misma solución
+como una red de orígenes y destinos. El grosor de cada ruta es la cantidad que envía, junto
+a cada nodo aparece lo que le queda por enviar o recibir y, en la optimización, el camino
+cerrado se ve con sus signos + y −. La red cambia con cada paso, igual que la tabla.
+
 ### Modo práctica
 
 En la pantalla Aprender, el modo práctica convierte la demostración en ejercicio:
@@ -108,7 +115,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-111 pruebas automatizadas. Entre ellas:
+117 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.

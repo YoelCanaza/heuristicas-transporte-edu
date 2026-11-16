@@ -20,6 +20,7 @@ import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
 import type { PenalEditable } from './TablaTransporte';
 import { TextoConGlosario } from './Glosa';
 import { Leyenda, TablaTransporte } from './TablaTransporte';
+import { VistaRed } from './VistaRed';
 
 export interface Fase {
   /** Índice del primer paso de la fase. */
@@ -35,6 +36,8 @@ interface Props {
   practica?: boolean;
   /** En modo práctica, preguntar también la cantidad, la línea que se tacha, θ y la celda que sale. */
   completa?: boolean;
+  /** Dibujar, bajo la tabla, el mismo estado como red de orígenes y destinos. */
+  red?: boolean;
   /** Método de construcción en curso; permite diagnosticar los errores del modo práctica. */
   metodo?: MetodoInicial;
 }
@@ -130,7 +133,15 @@ function buscarObjetivo(pasos: Paso[], idx: number): number | null {
   return s?.celda && (s.tipo === 'asignacion' || s.tipo === 'ciclo') ? k : null;
 }
 
-export function Reproductor({ problema, pasos, fases, practica = false, completa = false, metodo }: Props) {
+export function Reproductor({
+  problema,
+  pasos,
+  fases,
+  practica = false,
+  completa = false,
+  red = false,
+  metodo,
+}: Props) {
   const [idx, setIdx] = useState(0);
   const [reproduciendo, setReproduciendo] = useState(false);
   const [ms, setMs] = useState(VELOCIDADES[1].ms);
@@ -417,6 +428,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
             marcada={ej.marcada}
             penalEditable={penalEditable}
           />
+          {red && <VistaRed problema={problema} paso={visible} />}
           <Leyenda paso={visible} problema={problema} />
         </section>
 

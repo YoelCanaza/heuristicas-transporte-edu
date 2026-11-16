@@ -25,6 +25,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   const [detallado, setDetallado] = useState(false);
   const [practica, setPractica] = useState(false);
   const [completa, setCompleta] = useState(true);
+  const [red, setRed] = useState(false);
 
   const { balanceado, pasos, fases } = useMemo(() => {
     const inicial = resolverMetodo(problema, metodo);
@@ -99,6 +100,10 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
           <input type="checkbox" checked={practica} onChange={(e) => setPractica(e.target.checked)} />
           Modo práctica
         </label>
+        <label className="chip-check" title="Dibuja bajo la tabla la misma solución como red de orígenes y destinos">
+          <input type="checkbox" checked={red} onChange={(e) => setRed(e.target.checked)} />
+          Vista de red
+        </label>
         {practica && (
           <label
             className="chip-check"
@@ -122,6 +127,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
         fases={fases}
         practica={practica}
         completa={completa}
+        red={red}
         metodo={metodo}
       />
     </section>

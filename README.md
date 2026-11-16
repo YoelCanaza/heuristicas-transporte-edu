@@ -40,6 +40,14 @@ aplicación solo revisa que no se pase de la oferta ni de la demanda. Con el rep
 lo compara con el óptimo y con la solución inicial de cada método: cuánto de más costó, a
 qué métodos igualó o superó y en qué rutas difiere de un reparto óptimo.
 
+### El precio de la miopía
+
+Al terminar la construcción, el paso «Solución inicial» dice cuánto más cuesta esa solución
+que el óptimo y marca las asignaciones que usaron una ruta cara porque una decisión anterior
+cerró otra más barata de su fila o columna. Cada una explica qué ruta barata ya no estaba
+disponible, qué asignación la cerró y permite ir a ese paso. En Costo Mínimo se titula «El
+precio de la miopía»; en los otros métodos y en el laboratorio cambia el título.
+
 ### Óptimos alternativos
 
 Cuando la solución óptima tiene celdas vacías con costo marginal 0, el último paso de Aprender
@@ -131,7 +139,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-133 pruebas automatizadas. Entre ellas:
+138 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -146,6 +154,8 @@ permite probar toda la lógica sin interfaz.
 - Óptimos alternativos: cada cambio de base conserva ofertas, demandas, el total y la
   optimalidad; volver por la celda que salió recupera la solución, y MODI da los mismos
   marginales que el Camino de las Piedras.
+- El precio de la miopía: en el ejemplo de Taha cada método queda a 85, 40 y 40 del óptimo,
+  y cada ruta cara apunta a la asignación que de verdad agotó la línea (no a una de ε posterior).
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores (penalizaciones, celda, cantidad, línea que se tacha, θ y celda
   que sale) y la

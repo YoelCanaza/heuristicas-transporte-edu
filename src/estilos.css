@@ -2656,3 +2656,27 @@ g.marca-serie {
 .explorador p {
   margin: 0;
 }
+
+/* ───────── El precio de la miopía ───────── */
+.lista-miopia {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+button.enlace {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--azul);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.enlace:hover:not(:disabled) {
+  border: none;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { celdasAlternativas, mismaSolucion, pasarAOptimoAlternativo } from '../core/alternativos';
 import {
   diagnosticarAsignacion,
@@ -16,6 +16,7 @@ import {
 } from '../core/diagnostico';
 import type { Tachado } from '../core/diagnostico';
 import type { MetodoInicial } from '../core/metodos';
+import { analizarMiopia, describirPrecio, describirRutaCara } from '../core/miopia';
 import type { Celda, Linea, Paso, Problema } from '../core/tipos';
 import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
 import type { PenalEditable } from './TablaTransporte';
@@ -57,6 +58,29 @@ const ETIQUETA_TIPO: Record<Paso['tipo'], string> = {
   pivoteo: 'Nueva solución',
   optimo: 'Óptimo',
   limite: 'Sin confirmar',
+};
+
+const TEXTO_MIOPIA: Record<MetodoInicial | 'propia', { titulo: string; intro: string }> = {
+  costoMinimo: {
+    titulo: 'El precio de la miopía',
+    intro:
+      'Costo Mínimo toma en cada paso la ruta más barata que queda, sin mirar adelante. Al principio ahorra; al final puede quedar obligado a usar rutas caras.',
+  },
+  noroeste: {
+    titulo: 'El precio de no mirar los costos',
+    intro:
+      'Esquina Noroeste recorre la tabla en orden sin mirar los costos: algunas asignaciones caen en rutas caras mientras otras más baratas quedan cerradas.',
+  },
+  vogel: {
+    titulo: 'Lo que Vogel no pudo evitar',
+    intro:
+      'Vogel atiende primero las filas y columnas donde equivocarse cuesta más, pero tampoco mira todo el problema a la vez: algunas decisiones siguen cerrando rutas baratas.',
+  },
+  propia: {
+    titulo: 'El precio de las decisiones tempranas',
+    intro:
+      'Cada asignación agota una fila o una columna y cierra sus rutas. Una decisión barata al principio puede obligar a usar rutas caras después.',
+  },
 };
 
 const VELOCIDADES = [
@@ -297,6 +321,15 @@ export function Reproductor({
   };
   const avisoExploracion = exploracion.idx === idx ? exploracion.aviso : null;
 
+  // Al terminar la construcción: qué rutas caras se usaron por decisiones anteriores y cuánto costó.
+  const enFin = paso.tipo === 'fin';
+  const miopia = useMemo(
+    () => (enFin ? analizarMiopia(problema, pasos.slice(0, idx + 1)) : null),
+    [enFin, problema, pasos, idx],
+  );
+  const rutasMostradas = miopia?.rutas.slice(0, 3) ?? [];
+  const textoMiopia = TEXTO_MIOPIA[metodo ?? 'propia'];
+
   /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number, aviso: Aviso | null = null) => {
     const destino = Math.max(0, Math.min(ultimo, k));
@@ -457,7 +490,7 @@ export function Reproductor({
             onCeldaClick={conClic ? alClic : explorable ? alExplorar : undefined}
             marcada={ej.marcada}
             penalEditable={penalEditable}
-            resaltadas={explorable ? alternativas : undefined}
+            resaltadas={explorable ? alternativas : enFin ? rutasMostradas.map((r) => r.celda) : undefined}
           />
           {red && <VistaRed problema={problema} paso={visible} />}
           <Leyenda paso={visible} problema={problema} />
@@ -499,6 +532,40 @@ export function Reproductor({
                     </button>
                   </div>
                 </>
+              )}
+            </div>
+          )}
+          {miopia && !pregunta && (
+            <div className="explorador">
+              <p className="pregunta">{textoMiopia.titulo}</p>
+              <p>{textoMiopia.intro}</p>
+              <p>{describirPrecio(problema, miopia, paso.x)}</p>
+              {rutasMostradas.length > 0 ? (
+                <>
+                  <p className="ayuda">
+                    {rutasMostradas.length === 1
+                      ? 'La celda marcada en la tabla usó una ruta cara porque una decisión anterior cerró otra más barata:'
+                      : `Las ${rutasMostradas.length} celdas marcadas en la tabla usaron rutas caras porque decisiones anteriores cerraron otras más baratas${miopia.rutas.length > rutasMostradas.length ? ` (se muestran las ${rutasMostradas.length} que más pesan de ${miopia.rutas.length})` : ''}:`}
+                  </p>
+                  <ol className="lista-miopia">
+                    {rutasMostradas.map((r) => (
+                      <li key={r.paso}>
+                        {describirRutaCara(problema, r)}{' '}
+                        <button className="enlace" onClick={() => ir(r.cierre)}>
+                          Ver el paso {r.cierre + 1}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="ayuda">
+                    El costo de más por unidad es una pista, no el precio exacto: corregir una ruta cambia otras. El
+                    precio real es la distancia al óptimo.
+                  </p>
+                </>
+              ) : (
+                <p className="ayuda">
+                  Ninguna asignación tuvo que usar una ruta más cara de su fila o columna por una decisión anterior.
+                </p>
               )}
             </div>
           )}

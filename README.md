@@ -32,6 +32,15 @@ cómo se llega a un problema de minimización equivalente.
 
 La página de Teoría explica ambas variantes, con sus pasos y errores frecuentes.
 
+### Compartir un problema por enlace
+
+En la pantalla Problema, «Compartir este problema» copia un enlace que lleva los datos de la
+tabla (costos u utilidades, ofertas, demandas, rutas prohibidas y objetivo) y abre la pantalla
+elegida: Aprender, Tu reparto, Comparar o Problema. No hace falta servidor ni cuentas: el
+docente puede repartir el mismo ejercicio a toda la clase. Al abrirlo, si el estudiante tenía
+otro problema guardado, la aplicación avisa y permite volver a él. Un enlace dañado no
+reemplaza nada.
+
 ### Reto inicial: reparte a tu manera
 
 Antes de ver ningún método, el estudiante puede intentarlo solo. En Aprender, la opción
@@ -146,7 +155,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-139 pruebas automatizadas. Entre ellas:
+150 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -163,6 +172,8 @@ permite probar toda la lógica sin interfaz.
   marginales que el Camino de las Piedras.
 - El precio de la miopía: en el ejemplo de Taha cada método queda a 85, 40 y 40 del óptimo,
   y cada ruta cara apunta a la asignación que de verdad agotó la línea (no a una de ε posterior).
+- Enlaces: codificar y decodificar devuelve el mismo problema (también con decimales, tildes,
+  maximización y rutas prohibidas); los enlaces dañados o de más de 8×8 se rechazan.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
 - El diagnóstico de errores (penalizaciones, celda, cantidad, línea que se tacha, θ y celda
   que sale) y la

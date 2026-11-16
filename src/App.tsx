@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { decodificarProblema, mismoProblema } from './core/enlace';
 import { EJEMPLO_TAHA } from './core/ejemplos';
 import type { Problema } from './core/tipos';
 import { esProblema, validar } from './core/validacion';
@@ -9,7 +10,7 @@ import { Inicio } from './ui/Inicio';
 import { Laboratorio } from './ui/Laboratorio';
 import { Reparto } from './ui/Reparto';
 import { Teoria } from './ui/Teoria';
-import { useRuta } from './ui/ruta';
+import { leerCompartido, sinCompartido, useRuta } from './ui/ruta';
 import type { Vista } from './ui/ruta';
 
 type Tema = 'light' | 'dark';
@@ -50,6 +51,10 @@ export function App() {
   const [problema, setProblema] = useState<Problema>(problemaInicial);
   const [ruta, ir] = useRuta();
   const [tema, setTema] = useState<Tema>(temaInicial);
+  // Problema que llegó por enlace: el que había antes (para poder volver) o un aviso de enlace dañado.
+  const [compartido, setCompartido] = useState<{ previo: Problema | null; error: boolean } | null>(null);
+  const problemaActual = useRef(problema);
+  problemaActual.current = problema;
   const valido = validar(problema).length === 0;
   const { vista } = ruta;
   // El reto inicial es parte de Aprender: no tiene entrada propia en el menú.
@@ -68,6 +73,30 @@ export function App() {
     const etiqueta = vista === 'reparto' ? 'Tu reparto' : VISTAS.find((v) => v.id === vista)?.etiqueta;
     document.title = etiqueta && vista !== 'inicio' ? `${etiqueta} · HeurisTrans` : 'HeurisTrans';
   }, [vista]);
+
+  useEffect(() => {
+    const revisar = () => {
+      const codigo = leerCompartido(window.location.hash);
+      if (codigo === null) return;
+      // Se limpia la dirección para que recargar o compartir la pantalla no vuelva a cargar el problema.
+      history.replaceState(
+        null,
+        '',
+        window.location.pathname + window.location.search + sinCompartido(window.location.hash),
+      );
+      const nuevo = decodificarProblema(codigo);
+      if (!nuevo) {
+        setCompartido({ previo: null, error: true });
+        return;
+      }
+      const previo = problemaActual.current;
+      setCompartido({ previo: mismoProblema(previo, nuevo) ? null : previo, error: false });
+      setProblema(nuevo);
+    };
+    revisar();
+    window.addEventListener('hashchange', revisar);
+    return () => window.removeEventListener('hashchange', revisar);
+  }, []);
 
   useEffect(() => {
     try {
@@ -141,6 +170,34 @@ export function App() {
       </header>
 
       <main>
+        {compartido && (
+          <div
+            className={compartido.error ? 'aviso error banda-compartido' : 'aviso ok banda-compartido'}
+            role="status"
+          >
+            <p>
+              {compartido.error
+                ? 'El enlace no contiene un problema válido (puede estar incompleto). Se mantiene tu problema.'
+                : compartido.previo
+                  ? 'Abriste un problema compartido por enlace. Reemplazó al que tenías.'
+                  : 'Abriste un problema compartido por enlace. Es el mismo que ya tenías.'}
+            </p>
+            <div className="acciones">
+              {compartido.previo && (
+                <button
+                  className="secundario"
+                  onClick={() => {
+                    setProblema(compartido.previo!);
+                    setCompartido(null);
+                  }}
+                >
+                  Volver a mi problema anterior
+                </button>
+              )}
+              <button onClick={() => setCompartido(null)}>Entendido</button>
+            </div>
+          </div>
+        )}
         {vista === 'inicio' && (
           <Inicio
             onMetodo={(metodo, optimizador) => ir({ vista: 'aprender', metodo, optimizador })}

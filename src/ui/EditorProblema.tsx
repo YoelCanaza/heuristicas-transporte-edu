@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import { balancear } from '../core/balanceo';
 import { EJEMPLO_TAHA, crearAleatorio, generarProblema, nombres } from '../core/ejemplos';
+import { codificarProblema } from '../core/enlace';
 import type { Problema } from '../core/tipos';
 import { fmt, suma } from '../core/util';
 import { validar } from '../core/validacion';
+import { enlaceProblema } from './ruta';
+import type { Vista } from './ruta';
+
+const DESTINOS_ENLACE: { vista: Vista; etiqueta: string }[] = [
+  { vista: 'aprender', etiqueta: 'Aprender (paso a paso)' },
+  { vista: 'reparto', etiqueta: 'Tu reparto (reto inicial)' },
+  { vista: 'comparar', etiqueta: 'Comparar métodos' },
+  { vista: 'problema', etiqueta: 'Problema (para editarlo)' },
+];
 
 interface Props {
   problema: Problema;
@@ -234,6 +244,7 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
           ) : (
             balance!.ficticio && <p className="aviso">{balance!.explicacion}</p>
           )}
+          <Compartir problema={p} deshabilitado={errores.length > 0} />
           <button className="primario" onClick={onContinuar} disabled={errores.length > 0}>
             Resolver paso a paso
             <svg
@@ -253,5 +264,65 @@ export function EditorProblema({ problema: p, onChange, onContinuar }: Props) {
         </aside>
       </div>
     </section>
+  );
+}
+
+/** Copia un enlace que abre la pantalla elegida con este mismo problema. */
+function Compartir({ problema, deshabilitado }: { problema: Problema; deshabilitado: boolean }) {
+  const [vista, setVista] = useState<Vista>('aprender');
+  const [estado, setEstado] = useState<'' | 'copiado' | 'manual'>('');
+  const enlace = enlaceProblema(window.location.origin + window.location.pathname, vista, codificarProblema(problema));
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(enlace);
+      setEstado('copiado');
+    } catch {
+      // Sin permiso para el portapapeles (o sin conexión segura): se muestra el enlace para copiarlo a mano.
+      setEstado('manual');
+    }
+  };
+
+  return (
+    <div className="compartir">
+      <h3>Compartir este problema</h3>
+      <p className="ayuda">
+        El enlace lleva los datos del problema: quien lo abra verá exactamente esta tabla, sin cuentas ni servidor.
+      </p>
+      <label>
+        Abrir en
+        <select
+          value={vista}
+          onChange={(e) => {
+            setVista(e.target.value as Vista);
+            setEstado('');
+          }}
+        >
+          {DESTINOS_ENLACE.map((d) => (
+            <option key={d.vista} value={d.vista}>
+              {d.etiqueta}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button className="secundario" onClick={copiar} disabled={deshabilitado}>
+        Copiar enlace
+      </button>
+      {estado === 'copiado' && (
+        <p className="ayuda" role="status">
+          Enlace copiado. Pégalo donde quieras compartirlo.
+        </p>
+      )}
+      {estado === 'manual' && (
+        <input
+          type="text"
+          readOnly
+          value={enlace}
+          aria-label="Enlace para compartir"
+          onFocus={(e) => e.target.select()}
+          autoFocus
+        />
+      )}
+    </div>
   );
 }

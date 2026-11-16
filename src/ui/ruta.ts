@@ -16,12 +16,28 @@ const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
 
 /** Interpreta direcciones como `#/aprender/vogel` o `#/aprender/vogel/modi`; lo desconocido cae en el inicio. */
 export function leerRuta(hash: string): Ruta {
-  const [vista, metodo, optimizador] = hash.replace(/^#\/?/, '').split('/');
+  const [vista, metodo, optimizador] = hash.replace(/^#\/?/, '').split('?')[0].split('/');
   return {
     vista: VISTAS.includes(vista as Vista) ? (vista as Vista) : 'inicio',
     metodo: METODOS.includes(metodo as MetodoInicial) ? (metodo as MetodoInicial) : 'noroeste',
     optimizador: optimizador === 'modi' ? 'modi' : 'piedras',
   };
+}
+
+/** Problema codificado que trae la dirección (`#/aprender?p=…`), o null si no trae ninguno. */
+export function leerCompartido(hash: string): string | null {
+  const consulta = hash.split('?')[1];
+  return consulta ? new URLSearchParams(consulta).get('p') : null;
+}
+
+/** La dirección sin el problema compartido, para dejarla limpia una vez leído. */
+export function sinCompartido(hash: string): string {
+  return hash.split('?')[0];
+}
+
+/** Dirección completa que abre una pantalla con el problema codificado. */
+export function enlaceProblema(base: string, vista: Vista, codigo: string): string {
+  return `${base}${escribirRuta({ vista, metodo: 'noroeste', optimizador: 'piedras' })}?p=${codigo}`;
 }
 
 export function escribirRuta(r: Ruta): string {

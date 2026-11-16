@@ -37,7 +37,9 @@ La página de Teoría explica ambas variantes, con sus pasos y errores frecuente
 En la pantalla Aprender, el modo práctica convierte la demostración en ejercicio:
 
 - El estudiante predice qué celda elegirá el método. En Vogel debe calcular él mismo las
-  penalizaciones: la tabla no las muestra hasta que pide la segunda pista.
+  penalizaciones: con «Preguntar cada decisión» las **escribe en la tabla**, casilla por
+  casilla, y cada una se corrige al salir de ella; sin esa opción, la tabla no las muestra
+  hasta que pide la segunda pista.
 - En el Camino de las Piedras predice qué celda entra a la base y después **traza a mano su
   camino cerrado**, haciendo clic en las celdas donde gira. Con MODI, la tabla muestra u y v
   y el estudiante calcula costo − u − v para decidir qué celda entra.
@@ -106,7 +108,7 @@ permite probar toda la lógica sin interfaz.
 
 ## Pruebas
 
-106 pruebas automatizadas. Entre ellas:
+111 pruebas automatizadas. Entre ellas:
 
 - El ejemplo de Taha da los valores del libro: Esquina Noroeste 520, Costo Mínimo 475,
   Vogel 475 y óptimo 435.
@@ -117,7 +119,8 @@ permite probar toda la lógica sin interfaz.
 - El comparador: los recorridos del ejemplo de Taha (520 → 475 → 475 → 435 desde Esquina
   Noroeste), que el costo nunca sube entre iteraciones y los avisos con rutas prohibidas.
 - La aplicación no declara óptima una solución si se detuvo por el límite de iteraciones.
-- El diagnóstico de errores (celda, cantidad, línea que se tacha, θ y celda que sale) y la
+- El diagnóstico de errores (penalizaciones, celda, cantidad, línea que se tacha, θ y celda
+  que sale) y la
   validación del trazado del camino cerrado.
 - Maximización: un caso 2×2 resuelto a mano y, en problemas aleatorios, la misma utilidad
   óptima desde los tres métodos. Rutas prohibidas: el óptimo las evita, coincide con poner

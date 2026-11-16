@@ -3,9 +3,11 @@ import {
   diagnosticarAsignacion,
   diagnosticarCantidad,
   diagnosticarEntrada,
+  diagnosticarPenalizacion,
   diagnosticarSalida,
   diagnosticarTachado,
   diagnosticarTheta,
+  ejemploPenalizacion,
   empataSalida,
   recordarCriterio,
   restantes,
@@ -13,8 +15,9 @@ import {
 } from '../core/diagnostico';
 import type { Tachado } from '../core/diagnostico';
 import type { MetodoInicial } from '../core/metodos';
-import type { Celda, Paso, Problema } from '../core/tipos';
+import type { Celda, Linea, Paso, Problema } from '../core/tipos';
 import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
+import type { PenalEditable } from './TablaTransporte';
 import { TextoConGlosario } from './Glosa';
 import { Leyenda, TablaTransporte } from './TablaTransporte';
 
@@ -82,10 +85,11 @@ interface Aviso {
 }
 
 /**
- * Preguntas de un mismo paso, en orden. En una asignación: celda → cantidad → tachar.
+ * Preguntas de un mismo paso, en orden. En una asignación: (penal →) celda → cantidad → tachar;
+ * 'penal' solo existe en Vogel, cuando hay penalizaciones que calcular.
  * Al entrar una celda a la base: celda → trazo → theta → salida.
  */
-type FaseEjercicio = 'celda' | 'cantidad' | 'tachar' | 'trazo' | 'theta' | 'salida';
+type FaseEjercicio = 'penal' | 'celda' | 'cantidad' | 'tachar' | 'trazo' | 'theta' | 'salida';
 
 /** Estado del ejercicio de práctica asociado a un paso; al cambiar de paso se descarta solo. */
 interface Ejercicio {
@@ -94,6 +98,10 @@ interface Ejercicio {
   trazo: Celda[];
   /** Texto escrito en la casilla de respuesta (cantidad o θ). */
   texto: string;
+  /** Penalizaciones escritas a mano, por línea ("fila-0", "columna-2"). */
+  penal: Record<string, { texto: string; estado: '' | 'ok' | 'mal' }>;
+  /** true cuando el estudiante ya calculó las penalizaciones de este paso. */
+  penalHechas: boolean;
   pistas: number;
   fallos: number;
   marcada: Celda | null;
@@ -105,6 +113,8 @@ const ejercicioNuevo = (idx: number, aviso: Aviso | null = null): Ejercicio => (
   fase: 'celda',
   trazo: [],
   texto: '',
+  penal: {},
+  penalHechas: false,
   pistas: 0,
   fallos: 0,
   marcada: null,
@@ -136,6 +146,17 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
   // Paso con las penalizaciones que justifican la elección (Vogel), si existe.
   const analisis = paso.tipo === 'penalizaciones' ? paso : objetivo === idx + 2 ? pasos[idx + 1] : null;
 
+  // Líneas cuya penalización escribe el estudiante: las que no están tachadas ni contienen el costo M.
+  const lineasPenal: Linea[] =
+    completa && meta?.tipo === 'asignacion' && analisis && analisis !== paso
+      ? [
+          ...analisis.penalFila!.map((v, k) => ({ tipo: 'fila' as const, k, v })),
+          ...analisis.penalColumna!.map((v, k) => ({ tipo: 'columna' as const, k, v })),
+        ].filter((l) => l.v != null && fmtCosto(problema, l.v) === fmt(l.v))
+      : [];
+  const fase: FaseEjercicio = ej.fase === 'celda' && lineasPenal.length > 0 && !ej.penalHechas ? 'penal' : ej.fase;
+  const clave = (l: Linea) => `${l.tipo}-${l.k}`;
+
   const nombreMeta = meta ? nombreCelda(problema, meta.celda!) : '';
   const resto = meta ? restantes(problema, paso, meta.celda!) : null;
   const origenMeta = meta ? problema.origenes[meta.celda!.i] : '';
@@ -146,18 +167,24 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
       meta?.tipo === 'ciclo'
         ? '¿Qué celda entrará a la base? Haz clic en ella.'
         : '¿Qué celda elegirá el método ahora? Haz clic en ella.',
+    penal: 'Calcula la penalización de cada fila y columna sin tachar y escríbela en su casilla.',
     cantidad: `¿Cuántas unidades se asignan a ${nombreMeta}?`,
     tachar: `Después de asignar en ${nombreMeta}, ¿qué se tacha?`,
     trazo: `Traza el camino cerrado de ${nombreMeta}: haz clic, en orden, en las piedras donde gira.`,
     theta: '¿Cuánto vale θ, la cantidad que se moverá por el camino?',
     salida: '¿Qué celda saldrá de la base? Haz clic en ella.',
   };
-  const pregunta = meta ? PREGUNTAS[ej.fase] : null;
+  const pregunta = meta ? PREGUNTAS[fase] : null;
 
   const pistasDe = (): string[] => {
     if (!meta || !resto) return [];
     const q = Math.min(resto.oferta, resto.demanda);
-    switch (ej.fase) {
+    switch (fase) {
+      case 'penal':
+        return [
+          'La penalización de una línea es la diferencia entre sus dos menores costos, contando solo las celdas sin tachar.',
+          `Un ejemplo: ${ejemploPenalizacion(problema, paso, lineasPenal[0])}`,
+        ];
       case 'cantidad':
         return [
           'No se puede enviar más de lo que le queda al origen ni más de lo que le falta al destino. Se envía lo máximo posible.',
@@ -196,9 +223,11 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
             ]
           : [
               metodo ? recordarCriterio(metodo, !analisis) : 'Aplica el criterio del método a las celdas sin tachar.',
-              analisis
-                ? 'Ahora la tabla muestra el valor de cada fila y columna.'
-                : `La celda está en la fila ${origenMeta}.`,
+              analisis && ej.penalHechas
+                ? 'Busca la mayor penalización entre las que calculaste; si hay empate, la línea que contiene el menor costo.'
+                : analisis
+                  ? 'Ahora la tabla muestra el valor de cada fila y columna.'
+                  : `La celda está en la fila ${origenMeta}.`,
             ];
     }
   };
@@ -206,24 +235,26 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
 
   // Lo que muestra la tabla: el paso actual más las ayudas del ejercicio.
   let visible = paso;
-  if (meta && ej.fase === 'trazo') {
+  if (meta && fase === 'trazo') {
     visible = { ...paso, celda: meta.celda, ciclo: ej.trazo, marginales: meta.marginales };
-  } else if (meta && (ej.fase === 'theta' || ej.fase === 'salida')) {
+  } else if (meta && (fase === 'theta' || fase === 'salida')) {
     visible = { ...paso, celda: meta.celda, ciclo: meta.ciclo, marginales: meta.marginales };
-  } else if (meta && (ej.fase === 'cantidad' || ej.fase === 'tachar')) {
+  } else if (meta && (fase === 'cantidad' || fase === 'tachar')) {
     // La celda ya se acertó: se muestra el análisis que la justifica y, al tachar, la cantidad ya asignada.
     visible = {
-      ...(ej.fase === 'tachar' ? { ...paso, x: meta.x, basica: meta.basica } : paso),
+      ...(fase === 'tachar' ? { ...paso, x: meta.x, basica: meta.basica } : paso),
       celda: meta.celda,
       penalFila: analisis?.penalFila,
       penalColumna: analisis?.penalColumna,
       lineaElegida: analisis?.lineaElegida,
     };
+  } else if (meta && analisis && (fase === 'penal' || ej.penalHechas)) {
+    visible = { ...paso, penalFila: analisis.penalFila, penalColumna: analisis.penalColumna };
   } else if (meta && ej.pistas >= 2) {
     if (meta.tipo === 'ciclo') visible = { ...paso, marginales: meta.marginales };
     else if (analisis) visible = { ...paso, penalFila: analisis.penalFila, penalColumna: analisis.penalColumna };
   }
-  const conClic = meta !== null && (ej.fase === 'celda' || ej.fase === 'trazo' || ej.fase === 'salida');
+  const conClic = meta !== null && (fase === 'celda' || fase === 'trazo' || fase === 'salida');
 
   /** Navegación manual: además de moverse, detiene la reproducción automática. */
   const ir = (k: number, aviso: Aviso | null = null) => {
@@ -262,13 +293,13 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
 
   /** Pasa a la siguiente pregunta del mismo paso, con pistas y fallos en cero. */
   const pasarA = (fase: FaseEjercicio, texto: string, trazo: Celda[] = []) =>
-    setEjercicio({ ...ejercicioNuevo(idx, { ok: true, texto }), fase, trazo });
+    setEjercicio({ ...ejercicioNuevo(idx, { ok: true, texto }), fase, trazo, penalHechas: ej.penalHechas });
 
   const alClic = (c: Celda) => {
     if (!meta || objetivo === null) return;
     const limpio = ej.fallos === 0 && ej.pistas === 0;
 
-    if (ej.fase === 'trazo') {
+    if (fase === 'trazo') {
       const r = validarTrazo(paso.basica, meta.ciclo!, ej.trazo, c);
       if (!r.ok) return fallar(r.motivo, c);
       if (!r.completo) return setEjercicio({ ...ej, trazo: [...ej.trazo, c], marcada: null, aviso: null });
@@ -277,7 +308,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
       return completa ? pasarA('theta', texto) : ir(objetivo, { ok: true, texto });
     }
 
-    if (ej.fase === 'salida') {
+    if (fase === 'salida') {
       if (empataSalida(meta, c)) {
         // Empate en θ: su respuesta es válida, aunque la traza saque otra de las empatadas.
         contarResuelta(limpio);
@@ -319,14 +350,45 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
     const valor = Number(ej.texto.trim().replace(',', '.'));
     const limpio = ej.fallos === 0 && ej.pistas === 0;
     const error =
-      ej.fase === 'cantidad'
+      fase === 'cantidad'
         ? diagnosticarCantidad(problema, paso, meta.celda!, valor)
         : diagnosticarTheta(problema, meta, valor);
     if (error) return fallar(error);
     contarResuelta(limpio);
-    if (ej.fase === 'cantidad') return pasarA('tachar', `¡Correcto! Se asignan ${fmt(valor)} unidades.`);
+    if (fase === 'cantidad') return pasarA('tachar', `¡Correcto! Se asignan ${fmt(valor)} unidades.`);
     pasarA('salida', `¡Correcto! θ = ${fmt(valor)}.`);
   };
+
+  const penalEditable: PenalEditable | undefined =
+    fase !== 'penal'
+      ? undefined
+      : {
+          casilla: (l) =>
+            lineasPenal.some((x) => clave(x) === clave(l)) ? (ej.penal[clave(l)] ?? { texto: '', estado: '' }) : null,
+          onCambio: (l, texto) =>
+            setEjercicio({ ...ej, penal: { ...ej.penal, [clave(l)]: { texto, estado: '' } }, marcada: null }),
+          onRevisar: (l) => {
+            const actual = ej.penal[clave(l)];
+            // Solo se revisa lo recién escrito: salir de una casilla ya revisada no cuenta otro error.
+            if (!actual || actual.estado !== '' || actual.texto.trim() === '') return;
+            const error = diagnosticarPenalizacion(problema, paso, l, Number(actual.texto.trim().replace(',', '.')));
+            const penal = {
+              ...ej.penal,
+              [clave(l)]: { ...actual, estado: error ? ('mal' as const) : ('ok' as const) },
+            };
+            if (error) {
+              return setEjercicio({ ...ej, penal, fallos: ej.fallos + 1, aviso: { ok: false, texto: error } });
+            }
+            if (!lineasPenal.every((x) => penal[clave(x)]?.estado === 'ok')) {
+              return setEjercicio({ ...ej, penal, aviso: null });
+            }
+            contarResuelta(ej.fallos === 0 && ej.pistas === 0);
+            setEjercicio({
+              ...ejercicioNuevo(idx, { ok: true, texto: '¡Correcto! Esas son las penalizaciones. Ahora úsalas.' }),
+              penalHechas: true,
+            });
+          },
+        };
 
   const alTachar = (respuesta: Tachado) => {
     if (!meta || objetivo === null) return;
@@ -353,6 +415,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
             paso={visible}
             onCeldaClick={conClic ? alClic : undefined}
             marcada={ej.marcada}
+            penalEditable={penalEditable}
           />
           <Leyenda paso={visible} problema={problema} />
         </section>
@@ -373,7 +436,7 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
           {pregunta && (
             <div className="ejercicio">
               <p className="pregunta">{pregunta}</p>
-              {(ej.fase === 'cantidad' || ej.fase === 'theta') && (
+              {(fase === 'cantidad' || fase === 'theta') && (
                 <form
                   className="respuesta"
                   onSubmit={(e) => {
@@ -382,20 +445,20 @@ export function Reproductor({ problema, pasos, fases, practica = false, completa
                   }}
                 >
                   <input
-                    key={ej.fase}
+                    key={fase}
                     type="text"
                     inputMode="decimal"
                     autoFocus
                     value={ej.texto}
                     onChange={(e) => setEjercicio({ ...ej, texto: e.target.value })}
-                    aria-label={ej.fase === 'cantidad' ? 'Cantidad que se asigna' : 'Valor de θ'}
+                    aria-label={fase === 'cantidad' ? 'Cantidad que se asigna' : 'Valor de θ'}
                   />
                   <button className="primario" disabled={ej.texto.trim() === ''}>
                     Comprobar
                   </button>
                 </form>
               )}
-              {ej.fase === 'tachar' && (
+              {fase === 'tachar' && (
                 <div className="respuesta">
                   <button onClick={() => alTachar('fila')}>Fila {origenMeta}</button>
                   <button onClick={() => alTachar('columna')}>Columna {destinoMeta}</button>

@@ -258,6 +258,58 @@ export function diagnosticarTachado(p: Problema, estado: Paso, asignacion: Paso,
   return `A ${origen} todavía le quedan ${fmt(oferta - q)}, así que su fila sigue abierta. La que quedó cubierta es la demanda de ${destino}: se tacha solo su columna.`;
 }
 
+/** Costos de una línea, separados en disponibles y ya tachados por la otra dirección. */
+function costosDeLinea(p: Problema, estado: Paso, linea: Linea): { libres: number[]; tachados: number[] } {
+  const libres: number[] = [];
+  const tachados: number[] = [];
+  const total = linea.tipo === 'fila' ? p.demandas.length : p.ofertas.length;
+  for (let t = 0; t < total; t++) {
+    const tachada = linea.tipo === 'fila' ? estado.columnaTachada?.[t] : estado.filaTachada?.[t];
+    const costo = linea.tipo === 'fila' ? p.costos[linea.k][t] : p.costos[t][linea.k];
+    (tachada ? tachados : libres).push(costo);
+  }
+  return { libres: libres.sort((a, b) => a - b), tachados };
+}
+
+/**
+ * Revisa la penalización de Vogel que el estudiante escribe para una fila o columna sin
+ * tachar. Devuelve null si acierta o la explicación del error.
+ */
+export function diagnosticarPenalizacion(p: Problema, estado: Paso, linea: Linea, respuesta: number): string | null {
+  const nombre = linea.tipo === 'fila' ? `la fila ${p.origenes[linea.k]}` : `la columna ${p.destinos[linea.k]}`;
+  const { libres, tachados } = costosDeLinea(p, estado, linea);
+  const correcta = libres.length >= 2 ? libres[1] - libres[0] : libres[0];
+  if (!Number.isFinite(respuesta)) return 'Escribe un número.';
+  if (cerca(respuesta, correcta)) return null;
+
+  if (cerca(respuesta, -correcta)) {
+    return `En ${nombre} el valor es correcto, pero la penalización nunca es negativa: se resta el menor costo del segundo menor.`;
+  }
+  if (cerca(respuesta, libres[0])) {
+    return `${fmtCosto(p, libres[0])} es el menor costo de ${nombre}. La penalización es la diferencia entre sus dos menores costos.`;
+  }
+  if (libres.length > 2 && cerca(respuesta, libres[libres.length - 1] - libres[0])) {
+    return `En ${nombre} restaste el mayor costo menos el menor. La penalización usa los dos menores: el menor y el que le sigue.`;
+  }
+  if (tachados.length > 0) {
+    const todos = [...libres, ...tachados].sort((a, b) => a - b);
+    if (cerca(respuesta, todos[1] - todos[0])) {
+      return `En ${nombre} contaste una celda tachada. Solo cuentan los costos de las celdas que siguen disponibles.`;
+    }
+  }
+  if (cerca(libres[0], libres[1]) && libres.length > 2 && cerca(respuesta, libres[2] - libres[0])) {
+    return `En ${nombre} el menor costo está repetido (${fmtCosto(p, libres[0])} dos veces). Los dos menores son iguales, así que la penalización es 0.`;
+  }
+  return `Revisa ${nombre}: busca sus dos menores costos entre las celdas sin tachar y réstalos.`;
+}
+
+/** Ejemplo resuelto de una penalización, para la segunda pista. */
+export function ejemploPenalizacion(p: Problema, estado: Paso, linea: Linea): string {
+  const nombre = linea.tipo === 'fila' ? `la fila ${p.origenes[linea.k]}` : `la columna ${p.destinos[linea.k]}`;
+  const { libres } = costosDeLinea(p, estado, linea);
+  return `En ${nombre} los dos menores costos disponibles son ${fmtCosto(p, libres[0])} y ${fmtCosto(p, libres[1])}: ${fmtCosto(p, libres[1])} − ${fmtCosto(p, libres[0])} = ${fmtCosto(p, libres[1] - libres[0])}.`;
+}
+
 /**
  * Revisa el valor de θ que da el estudiante. `entrada` es el paso en que entra la celda
  * (con su camino cerrado). Devuelve null si acierta o la explicación del error.

@@ -1751,6 +1751,25 @@ input[type='checkbox'] {
   line-height: 1.5;
 }
 
+.tabla-transporte .penal-entrada {
+  width: 3.4rem;
+  padding: 0.3rem 0.2rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabla-transporte .penal-entrada.ok {
+  border-color: var(--azul);
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+
+.tabla-transporte .penal-entrada.mal {
+  border-color: var(--coral);
+  background: var(--coral-suave);
+}
+
 .tabla-transporte .penal.elegida {
   box-shadow: inset 0 0 0 3px var(--ambar);
 }

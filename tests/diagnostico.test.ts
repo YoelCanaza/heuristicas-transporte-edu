@@ -4,9 +4,11 @@ import {
   diagnosticarAsignacion,
   diagnosticarCantidad,
   diagnosticarEntrada,
+  diagnosticarPenalizacion,
   diagnosticarSalida,
   diagnosticarTachado,
   diagnosticarTheta,
+  ejemploPenalizacion,
   empataSalida,
   lineasTachadas,
   tachadoCorrecto,
@@ -277,5 +279,60 @@ describe('práctica completa: θ y celda que sale', () => {
     expect(empataSalida(paso, otra)).toBe(true);
     expect(empataSalida(paso, paso.sale!)).toBe(false);
     expect(empataSalida(paso, paso.celda!)).toBe(false);
+  });
+});
+
+describe('práctica completa: penalizaciones de Vogel a mano', () => {
+  const { pasos } = resolverMetodo(p, 'vogel');
+  const fila = (k: number) => ({ tipo: 'fila' as const, k });
+  const columna = (k: number) => ({ tipo: 'columna' as const, k });
+
+  it('acepta exactamente las penalizaciones de cada análisis de la traza', () => {
+    let revisadas = 0;
+    pasos.forEach((s, n) => {
+      if (s.tipo !== 'penalizaciones') return;
+      const estado = pasos[n - 1];
+      s.penalFila!.forEach((v, k) => {
+        if (v === null) return;
+        expect(diagnosticarPenalizacion(p, estado, fila(k), v)).toBeNull();
+        expect(diagnosticarPenalizacion(p, estado, fila(k), v + 1)).not.toBeNull();
+        revisadas++;
+      });
+      s.penalColumna!.forEach((v, k) => {
+        if (v !== null) expect(diagnosticarPenalizacion(p, estado, columna(k), v)).toBeNull();
+      });
+    });
+    expect(revisadas).toBeGreaterThan(3);
+  });
+
+  it('explica cada tipo de error', () => {
+    // Fila O1 del ejemplo de Taha: costos 10, 2, 20, 11 → penalización 10 − 2 = 8.
+    const diag = (v: number) => diagnosticarPenalizacion(p, pasos[0], fila(0), v);
+    expect(diag(8)).toBeNull();
+    expect(diag(2)).toMatch(/menor costo de la fila O1/);
+    expect(diag(18)).toMatch(/mayor costo menos el menor/);
+    expect(diag(-8)).toMatch(/nunca es negativa/);
+    expect(diag(5)).toMatch(/Revisa la fila O1/);
+    expect(diag(NaN)).toMatch(/Escribe un número/);
+  });
+
+  it('reconoce que se contó una celda tachada', () => {
+    // Tras la primera asignación de Vogel, (O3, D1) = 5, la columna D1 queda tachada.
+    const estado = pasos[2];
+    expect(estado.columnaTachada).toEqual([true, false, false, false]);
+    // Fila O3: disponibles 14, 16, 18 → 2; contando el 4 tachado saldría 14 − 4 = 10.
+    expect(diagnosticarPenalizacion(p, estado, fila(2), 2)).toBeNull();
+    expect(diagnosticarPenalizacion(p, estado, fila(2), 10)).toMatch(/celda tachada/);
+  });
+
+  it('con el menor costo repetido la penalización es 0', () => {
+    const q = { ...p, costos: [[3, 3, 9, 12], ...p.costos.slice(1)] };
+    const estado = resolverMetodo(q, 'vogel').pasos[0];
+    expect(diagnosticarPenalizacion(q, estado, fila(0), 0)).toBeNull();
+    expect(diagnosticarPenalizacion(q, estado, fila(0), 6)).toMatch(/repetido.*es 0/);
+  });
+
+  it('el ejemplo de la pista muestra la resta', () => {
+    expect(ejemploPenalizacion(p, pasos[0], fila(0))).toMatch(/2 y 10: 10 − 2 = 8/);
   });
 });

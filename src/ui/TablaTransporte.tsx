@@ -1,4 +1,4 @@
-import type { Celda, Paso, Problema } from '../core/tipos';
+import type { Celda, Linea, Paso, Problema } from '../core/tipos';
 import { fmt, fmtCosto } from '../core/util';
 
 interface Props {
@@ -7,9 +7,40 @@ interface Props {
   onCeldaClick?: (c: Celda) => void;
   /** Celda marcada por el usuario en modo práctica. */
   marcada?: Celda | null;
+  /** Si está presente, las penalizaciones se escriben a mano en lugar de mostrarse. */
+  penalEditable?: PenalEditable;
 }
 
-export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Props) {
+/** Casillas para que el estudiante escriba las penalizaciones de Vogel. */
+export interface PenalEditable {
+  /** Texto escrito y resultado de la revisión; null si la línea no se pregunta (se muestra su valor). */
+  casilla: (l: Linea) => { texto: string; estado: '' | 'ok' | 'mal' } | null;
+  onCambio: (l: Linea, texto: string) => void;
+  /** Se llama al salir de la casilla o al pulsar Intro. */
+  onRevisar: (l: Linea) => void;
+}
+
+export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada, penalEditable }: Props) {
+  const penal = (tipo: Linea['tipo'], k: number, nombre: string) => {
+    const valor = (tipo === 'fila' ? paso.penalFila : paso.penalColumna)![k];
+    if (valor == null) return '';
+    const casilla = penalEditable?.casilla({ tipo, k });
+    if (!casilla) return fmtCosto(p, valor);
+    return (
+      <input
+        className={`penal-entrada ${casilla.estado}`}
+        type="text"
+        inputMode="decimal"
+        value={casilla.texto}
+        readOnly={casilla.estado === 'ok'}
+        aria-label={`Penalización de la ${tipo} ${nombre}`}
+        aria-invalid={casilla.estado === 'mal'}
+        onChange={(e) => penalEditable!.onCambio({ tipo, k }, e.target.value)}
+        onBlur={() => penalEditable!.onRevisar({ tipo, k })}
+        onKeyDown={(e) => e.key === 'Enter' && penalEditable!.onRevisar({ tipo, k })}
+      />
+    );
+  };
   const signos = new Map<string, '+' | '−'>();
   paso.ciclo?.forEach((c, k) => signos.set(`${c.i},${c.j}`, k % 2 === 0 ? '+' : '−'));
   const conPenal = !!paso.penalFila;
@@ -86,11 +117,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
               <td className={`total ${paso.filaTachada?.[i] ? 'tachada' : ''}`}>
                 <Cantidad original={p.ofertas[i]} restante={paso.ofertaRestante?.[i]} />
               </td>
-              {conPenal && (
-                <td className={elegida('fila', i) ? 'penal elegida' : 'penal'}>
-                  {paso.penalFila![i] != null ? fmtCosto(p, paso.penalFila![i]!) : ''}
-                </td>
-              )}
+              {conPenal && <td className={elegida('fila', i) ? 'penal elegida' : 'penal'}>{penal('fila', i, o)}</td>}
               {conUV && <td className="penal potencial">{fmtCosto(p, paso.u![i])}</td>}
             </tr>
           ))}
@@ -122,7 +149,7 @@ export function TablaTransporte({ problema: p, paso, onCeldaClick, marcada }: Pr
               <th className="etiqueta-fila">VALOR</th>
               {p.destinos.map((d, j) => (
                 <td key={d} className={elegida('columna', j) ? 'penal elegida' : 'penal'}>
-                  {paso.penalColumna![j] != null ? fmtCosto(p, paso.penalColumna![j]!) : ''}
+                  {penal('columna', j, d)}
                 </td>
               ))}
               <td className="vacio" />

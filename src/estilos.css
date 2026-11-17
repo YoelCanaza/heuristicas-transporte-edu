@@ -1,65 +1,65 @@
 /* ───────── Tokens ───────── */
 :root {
-  --fondo: #f3f5f9;
-  --superficie: #ffffff;
-  --superficie-2: #edf0f6;
-  --tinta: #0e1a3a;
-  --tinta-suave: #2d3854;
-  --apagado: #535d76;
-  --linea: #d9dfea;
-  --marino: #0e1a3a;
-  --sobre-marino: #ffffff;
-  --azul: #2449c9;
-  --azul-suave: #e1e8fd;
-  --azul-marca: #86a2ff;
-  --coral: #c2402b;
-  --coral-vivo: #d9442f;
-  --coral-suave: #fbe1db;
-  --coral-franja: #fbdcd5;
-  --coral-marca: #ff8c7a;
+  --fondo: #f7f2e9;
+  --superficie: #fffdf8;
+  --superficie-2: #f0e9db;
+  --tinta: #1c1a33;
+  --tinta-suave: #3b3853;
+  --apagado: #625e75;
+  --linea: #e0d7c6;
+  --marino: #1c1a33;
+  --sobre-marino: #fffdf8;
+  --azul: #3d3fd6;
+  --azul-suave: #e7e7fb;
+  --azul-marca: #9a9eff;
+  --coral: #b93a26;
+  --coral-vivo: #e5523a;
+  --coral-suave: #fbe2d9;
+  --coral-franja: #f8d6c8;
+  --coral-marca: #ff9a85;
   --ambar: #e39a2d;
-  --ambar-suave: #fcefd9;
-  --pendiente: #dde2ec;
-  --sombra: rgba(14, 26, 58, 0.1);
+  --ambar-suave: #fbedd0;
+  --pendiente: #e4dccc;
+  --sombra: rgba(28, 26, 51, 0.1);
   /* Series del gráfico comparativo: Esquina Noroeste, Costo Mínimo y Vogel (paleta validada para daltonismo). */
   --serie-0: #d9442f;
   --serie-1: #2449c9;
   --serie-2: #e39a2d;
 
-  --fuente-titulo: 'Unbounded', system-ui, sans-serif;
+  --fuente-titulo: 'Fraunces', Georgia, 'Times New Roman', serif;
   --fuente: 'Manrope', system-ui, sans-serif;
-  --fondo-cabecera: rgba(243, 245, 249, 0.85);
+  --fondo-cabecera: rgba(247, 242, 233, 0.82);
   --radio: 24px;
   --radio-sm: 16px;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --fondo: #0a1024;
-  --superficie: #121a33;
-  --superficie-2: #1c2645;
-  --tinta: #eef2fa;
-  --tinta-suave: #d3daea;
-  --apagado: #a3aecb;
-  --linea: #2a3556;
-  --marino: #eef2fa;
-  --sobre-marino: #0a1024;
-  --azul: #8fa9ff;
-  --azul-suave: #1f2f63;
-  --azul-marca: #86a2ff;
-  --coral: #ff9381;
+  --fondo: #0e0d1a;
+  --superficie: #17162b;
+  --superficie-2: #22213d;
+  --tinta: #f4f0e7;
+  --tinta-suave: #dcd7cb;
+  --apagado: #aba7bb;
+  --linea: #302f4d;
+  --marino: #f4f0e7;
+  --sobre-marino: #0e0d1a;
+  --azul: #a5a9ff;
+  --azul-suave: #272a68;
+  --azul-marca: #9a9eff;
+  --coral: #ff9d88;
   --coral-vivo: #ff8c7a;
-  --coral-suave: #47231f;
-  --coral-franja: #3a1e24;
-  --coral-marca: #c2402b;
+  --coral-suave: #4a2420;
+  --coral-franja: #3d1f26;
+  --coral-marca: #b93a26;
   --ambar: #f4be5e;
   --ambar-suave: #3a2c12;
-  --pendiente: #2a3556;
+  --pendiente: #302f4d;
   --sombra: rgba(0, 0, 0, 0.4);
   --serie-0: #e0503a;
   --serie-1: #5b7cf5;
   --serie-2: #b08c2a;
-  --fondo-cabecera: rgba(10, 16, 36, 0.85);
+  --fondo-cabecera: rgba(14, 13, 26, 0.82);
   color-scheme: dark;
 }
 
@@ -2750,16 +2750,16 @@ button.enlace:hover:not(:disabled) {
    Todo lo de esta sección es decorativo o de apoyo: con movimiento reducido no se anima nada
    y ningún contenido depende de una animación para verse. */
 :root {
-  --brillo-azul: rgba(36, 73, 201, 0.11);
-  --brillo-coral: rgba(217, 68, 47, 0.08);
-  --elevacion: 0 1px 2px rgba(14, 26, 58, 0.05), 0 14px 32px -18px rgba(14, 26, 58, 0.22);
-  --elevacion-alta: 0 2px 4px rgba(14, 26, 58, 0.06), 0 26px 48px -20px rgba(14, 26, 58, 0.32);
-  --sombra-boton: rgba(14, 26, 58, 0.6);
+  --brillo-azul: rgba(61, 63, 214, 0.1);
+  --brillo-coral: rgba(229, 82, 58, 0.1);
+  --elevacion: 0 1px 2px rgba(28, 26, 51, 0.05), 0 14px 32px -18px rgba(28, 26, 51, 0.2);
+  --elevacion-alta: 0 2px 4px rgba(28, 26, 51, 0.06), 0 28px 50px -20px rgba(28, 26, 51, 0.3);
+  --sombra-boton: rgba(28, 26, 51, 0.55);
 }
 
 :root[data-theme='dark'] {
-  --brillo-azul: rgba(91, 124, 245, 0.17);
-  --brillo-coral: rgba(255, 140, 122, 0.08);
+  --brillo-azul: rgba(125, 130, 255, 0.16);
+  --brillo-coral: rgba(255, 140, 122, 0.09);
   --elevacion: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 36px -18px rgba(0, 0, 0, 0.6);
   --elevacion-alta: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 30px 54px -20px rgba(0, 0, 0, 0.75);
   --sombra-boton: rgba(0, 0, 0, 0.7);
@@ -3100,7 +3100,7 @@ button.primario:active:not(:disabled) {
   font-size: 14px;
   font-weight: 800;
   text-anchor: middle;
-  fill: #0e1a3a;
+  fill: #1c1a33;
 }
 
 @supports (offset-path: path('M0 0')) {
@@ -3198,4 +3198,176 @@ button.primario:active:not(:disabled) {
   .capa-rotulo {
     display: none;
   }
+}
+
+/* ───────── Identidad: papel cálido y tinta ─────────
+   Fondo crema con cuadrícula de puntos (papel de cuaderno), títulos en serif y la red de la
+   portada sobre un tablero que se inclina. */
+:root {
+  --punto: rgba(28, 26, 51, 0.09);
+}
+
+:root[data-theme='dark'] {
+  --punto: rgba(244, 240, 231, 0.07);
+}
+
+::selection {
+  background: var(--azul-suave);
+  color: var(--tinta);
+}
+
+body::before {
+  background:
+    radial-gradient(62rem 42rem at 88% -8%, var(--brillo-azul), transparent 62%),
+    radial-gradient(52rem 38rem at -12% 38%, var(--brillo-coral), transparent 62%),
+    radial-gradient(circle, var(--punto) 1px, transparent 1.6px) 0 0 / 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 95%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 45%, transparent 95%);
+}
+
+h1,
+h2,
+h3 {
+  font-optical-sizing: auto;
+}
+
+.marca {
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+.logo {
+  border-radius: 13px;
+}
+
+.vista-cabecera h1 {
+  font-size: clamp(2.3rem, 4.2vw, 3.4rem);
+  letter-spacing: -0.035em;
+}
+
+.vista-cabecera h1 em,
+.hero-titulo em {
+  font-style: italic;
+  font-weight: 600;
+}
+
+.explicacion-cuerpo h2 {
+  font-size: 1.6rem;
+}
+
+/* Portada */
+.hero-titulo {
+  font-size: clamp(76px, 12.5vw, 184px);
+  line-height: 0.86;
+  letter-spacing: -0.05em;
+}
+
+.hero-titulo em {
+  color: var(--azul);
+}
+
+.franja {
+  left: 18%;
+  width: 16%;
+  transform: rotate(-4deg);
+  border-radius: 10px;
+}
+
+@keyframes crecer-franja {
+  from {
+    transform: rotate(-4deg) scaleY(0);
+  }
+}
+
+.escena {
+  padding: 1.25rem;
+  border: 1px solid var(--linea);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle, var(--punto) 1px, transparent 1.6px) 0 0 / 18px 18px,
+    var(--superficie);
+  box-shadow: var(--elevacion-alta);
+}
+
+.capa-nodos,
+.capa-rotulo {
+  inset: 1.25rem;
+}
+
+.chip-optimo {
+  position: relative;
+  margin: -2.75rem -0.75rem 0 auto;
+  border-color: var(--tinta);
+}
+
+.chip-optimo strong {
+  font-family: var(--fuente-titulo);
+  font-size: 2.6rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.modulos-cabecera h2 {
+  font-size: 2.1rem;
+  letter-spacing: -0.03em;
+}
+
+.modulo {
+  position: relative;
+  padding: 1.6rem;
+  border-radius: 22px;
+}
+
+.modulo h3 {
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+}
+
+.modulo p {
+  font-size: 0.92rem;
+}
+
+.modulo-numero {
+  font-style: italic;
+  font-size: 1.25rem;
+}
+
+.modulo::after {
+  content: '→';
+  position: absolute;
+  top: 1.35rem;
+  right: 1.5rem;
+  font-size: 1.2rem;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    opacity 0.2s,
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modulo:hover::after,
+.modulo:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 560px) {
+  .chip-optimo {
+    margin-right: 0;
+  }
+}
+
+/* Las capas absolutas miden lo mismo que la de rutas, que ocupa el interior del tablero. */
+.capa-nodos {
+  width: calc(100% - 2.5rem);
+}
+
+.chip-optimo {
+  margin-top: -2.25rem;
+}
+
+/* La cabecera ocupa todo el ancho de la página, con el mismo desenfoque de borde a borde. */
+.cabecera {
+  margin-inline: calc(-1 * clamp(16px, 4.5vw, 64px));
+  padding-inline: clamp(16px, 4.5vw, 64px);
 }

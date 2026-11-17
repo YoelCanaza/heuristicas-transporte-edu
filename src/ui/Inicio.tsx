@@ -70,9 +70,10 @@ export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
           <div className="hero-titulo-envoltura">
             <div className="franja" aria-hidden="true" />
             <h1 className="hero-titulo">
-              HEURIS
+              Heuris
               <br />
-              TRANS<span className="punto">.</span>
+              <em>Trans</em>
+              <span className="punto">.</span>
             </h1>
           </div>
           <p className="lead">

@@ -148,6 +148,7 @@ se pueden compartir enlaces directos.
 - `src/contenido/` — textos teóricos, convenciones de desempate y glosario.
 - `tests/` — pruebas Vitest.
 - `.github/workflows/ci.yml` — integración continua: verifica cada subida a `main`.
+- `.github/workflows/publicar.yml` — publica la aplicación en GitHub Pages en cada subida a `main`, solo si pasa la misma verificación.
 
 Los algoritmos no devuelven solo el resultado: generan una lista de pasos, cada uno con el
 estado de la tabla y su explicación. La interfaz se limita a reproducir esa lista, lo que
@@ -190,7 +191,7 @@ permite probar toda la lógica sin interfaz.
 | Componente                                 | Uso                    | Licencia                  |
 | ------------------------------------------ | ---------------------- | ------------------------- |
 | React, React DOM                           | Interfaz               | MIT                       |
-| Unbounded (vía @fontsource)                | Tipografía de títulos  | SIL Open Font License 1.1 |
+| Fraunces (vía @fontsource)                 | Tipografía de títulos  | SIL Open Font License 1.1 |
 | Manrope (vía @fontsource)                  | Tipografía de texto    | SIL Open Font License 1.1 |
 | Vite, Vitest, TypeScript (solo desarrollo) | Construcción y pruebas | MIT / Apache-2.0          |
 | ESLint, Prettier (solo desarrollo)         | Calidad del código     | MIT                       |

@@ -12,6 +12,7 @@ import type { MetodoInicial } from '../core/metodos';
 import type { Paso, Problema } from '../core/tipos';
 import { fmt } from '../core/util';
 import { TextoConGlosario } from './Glosa';
+import { IconoMetodo } from './IconoMetodo';
 import { TablaTransporte } from './TablaTransporte';
 import { useAparicion } from './movimiento';
 
@@ -86,8 +87,13 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial, opt
           key={tema}
         >
           <div className="leccion-texto">
-            <p className="eyebrow">{esOptimizador(tema) ? 'Método de optimización' : 'Solución inicial'}</p>
-            <h2>{t.titulo}</h2>
+            <div className="leccion-titulo">
+              <IconoMetodo tema={tema} />
+              <div>
+                <p className="eyebrow">{esOptimizador(tema) ? 'Método de optimización' : 'Solución inicial'}</p>
+                <h2>{t.titulo}</h2>
+              </div>
+            </div>
             <p className="leccion-idea">{t.idea}</p>
 
             <h3>Paso a paso</h3>

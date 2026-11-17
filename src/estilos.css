@@ -4121,3 +4121,271 @@ h3 {
 .leccion-pestanas {
   border-radius: 28px;
 }
+
+/* ───────── Dibujo de cada método ───────── */
+.icono-metodo {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  color: var(--tinta);
+}
+
+.ic-celda {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  opacity: 0.3;
+}
+
+.ic-celda.llena {
+  fill: var(--azul);
+  stroke: var(--azul);
+  opacity: 0.28;
+}
+
+.ic-punto {
+  fill: currentColor;
+  opacity: 0.35;
+}
+
+.ic-acento {
+  fill: var(--coral-vivo);
+}
+
+.ic-mas {
+  fill: var(--azul);
+}
+
+.ic-menos {
+  fill: var(--coral-vivo);
+}
+
+.ic-trazo {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.modulo .icono-metodo {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modulo:hover .icono-metodo {
+  transform: scale(1.12) rotate(-3deg);
+}
+
+/* El dibujo ocupa la esquina: la flecha de antes ya no hace falta. */
+.modulo::after {
+  content: none;
+}
+
+.modulo h3 {
+  padding-right: 3.5rem;
+}
+
+.modulo.destacado .icono-metodo {
+  color: var(--sobre-marino);
+}
+
+.leccion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.leccion-titulo .icono-metodo {
+  width: 72px;
+  height: 72px;
+  padding: 8px;
+  border-radius: 20px;
+  background: var(--superficie-2);
+}
+
+/* ───────── Mapa de costos en la tabla ─────────
+   Un solo tono, de claro a intenso, distinto del azul (+), el coral (−) y el ámbar (celda actual). */
+:root {
+  --calor-tono: #0f8f7e;
+}
+
+:root[data-theme='dark'] {
+  --calor-tono: #3fc7b2;
+}
+
+.tabla-transporte.con-calor .celda:not(.basica):not(.mas):not(.menos):not(.prohibida) {
+  background: color-mix(in srgb, var(--calor-tono) calc(var(--calor, 0) * 36%), var(--superficie));
+}
+
+/* En las celdas que ya tienen su propio color, el mapa se lee en la etiqueta del costo. */
+.tabla-transporte.con-calor .celda:not(.prohibida) .costo {
+  top: 5px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--calor-tono) calc(12% + var(--calor, 0) * 44%), transparent);
+  color: var(--tinta);
+}
+
+.muestra.calor {
+  width: 44px;
+  background: linear-gradient(to right, var(--superficie), var(--calor-tono));
+  box-shadow: inset 0 0 0 1px var(--linea);
+}
+
+.chip-boton {
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+
+/* ───────── Llegada al óptimo ───────── */
+.en-optimo .tabla-transporte .celda.basica {
+  animation: destello 1.2s ease backwards;
+}
+
+@keyframes destello {
+  35% {
+    box-shadow: inset 0 0 0 3px var(--azul);
+  }
+}
+
+.vista-red.optima .red-ruta:not(.vacia) {
+  stroke: var(--azul);
+  opacity: 0.9;
+}
+
+.red-unidad.optima {
+  stroke: var(--azul);
+}
+
+@supports (offset-path: path('M0 0')) {
+  .red-unidad.optima {
+    animation: viajar 2.6s linear infinite;
+  }
+}
+
+.cierre {
+  padding: 1rem 1.1rem;
+  border-radius: var(--radio-sm);
+  background: var(--azul-suave);
+  animation: aparecer-alto 0.5s 0.15s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.cierre dl {
+  margin: 0.6rem 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.9rem;
+}
+
+.cierre dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.cierre dd {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.cierre-optimo dd {
+  color: var(--azul);
+}
+
+.cierre-flecha {
+  padding-bottom: 0.25rem;
+  font-size: 1.3rem;
+  color: var(--apagado);
+}
+
+.cierre > p:last-child {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* ───────── Modo presentación ─────────
+   Solo la tabla, la explicación y los controles, a pantalla completa y con letra grande. */
+.vista.presentacion {
+  animation: none;
+}
+
+.presentacion > .vista-cabecera,
+.presentacion > .chips,
+.presentacion > .teorias,
+.presentacion .reflexion {
+  display: none;
+}
+
+.presentacion-barra {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 61;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem clamp(16px, 3vw, 48px);
+  background: var(--fondo);
+  border-bottom: 1px solid var(--linea);
+}
+
+.presentacion-barra strong {
+  font-family: var(--fuente-titulo);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.presentacion-barra button {
+  margin-left: auto;
+}
+
+.presentacion .reproductor {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: auto;
+  padding: 5rem clamp(16px, 3vw, 48px) 1.25rem;
+  background: var(--fondo);
+}
+
+.presentacion .reproductor-pasos {
+  min-height: 100%;
+}
+
+.presentacion .reproductor-cuerpo {
+  flex: 1;
+  zoom: 1.15;
+}
+
+@media (min-width: 1500px) {
+  .presentacion .reproductor-cuerpo {
+    zoom: 1.35;
+  }
+}
+
+@media (min-width: 1900px) {
+  .presentacion .reproductor-cuerpo {
+    zoom: 1.6;
+  }
+}
+
+@media (max-width: 700px) {
+  .presentacion-barra .ayuda {
+    display: none;
+  }
+
+  .presentacion .reproductor-cuerpo {
+    zoom: 1;
+  }
+}

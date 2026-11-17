@@ -79,7 +79,11 @@ export function VistaRed({ problema: p, paso, pulso = 0 }: Props) {
 
   // Unidades que se ven viajar en este paso: del origen al destino en la ruta recién asignada;
   // en un camino cerrado, hacia el destino donde se suma θ y de vuelta al origen donde se resta.
+  const optima = paso.tipo === 'optimo';
   const viajes = aristas.flatMap((a) => {
+    // En el óptimo circula toda la red: más unidades a la vista en las rutas que más envían.
+    if (optima)
+      return a.cantidad > 0 ? [{ a, clase: 'optima', unidades: 1 + Math.round(2 * (a.cantidad / mayor)) }] : [];
     if (a.signo) return [{ a, clase: a.signo === '+' ? 'mas' : 'menos', unidades: 2 }];
     if (paso.tipo === 'asignacion' && a.actual && a.cantidad > 0)
       return [{ a, clase: 'actual', unidades: 2 + Math.round(3 * (a.cantidad / mayor)) }];
@@ -93,7 +97,7 @@ export function VistaRed({ problema: p, paso, pulso = 0 }: Props) {
       .join('; ') || 'todavía no hay envíos';
 
   return (
-    <figure className="vista-red">
+    <figure className={optima ? 'vista-red optima' : 'vista-red'}>
       <svg viewBox={`0 0 ${ANCHO} ${alto}`} role="img" aria-label={`Red de transporte: ${descripcion}.`}>
         {conFondo &&
           p.origenes.map((_, i) =>
@@ -130,7 +134,10 @@ export function VistaRed({ problema: p, paso, pulso = 0 }: Props) {
                 key={`${a.i}-${a.j}-${k}`}
                 className={`red-unidad ${clase}`}
                 r={5}
-                style={{ offsetPath: `path('${camino(a.i, a.j)}')`, animationDelay: `${k * 130}ms` }}
+                style={{
+                  offsetPath: `path('${camino(a.i, a.j)}')`,
+                  animationDelay: optima ? `${-(k / unidades) * 2.6}s` : `${k * 130}ms`,
+                }}
               />
             )),
           )}

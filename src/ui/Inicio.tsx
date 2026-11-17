@@ -1,5 +1,7 @@
 import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
+import type { TemaTeoria } from '../contenido/teoria';
+import { IconoMetodo } from './IconoMetodo';
 import { useAparicion, useInclinacion, useValorAnimado } from './movimiento';
 
 interface Props {
@@ -55,6 +57,9 @@ const MODULOS: { titulo: string; texto: string; metodo: MetodoInicial; optimizad
     optimizador: 'modi',
   },
 ];
+
+/** Dibujo de cada módulo, en el mismo orden que MODULOS. */
+const ICONOS: TemaTeoria[] = ['noroeste', 'costoMinimo', 'vogel', 'piedras', 'modi'];
 
 export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
   const hero = useInclinacion<HTMLDivElement>();
@@ -210,12 +215,14 @@ export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
       <div className="modulos" ref={modulos}>
         {MODULOS.map((m, k) => (
           <button key={m.titulo} className="modulo" onClick={() => onMetodo(m.metodo, m.optimizador ?? 'piedras')}>
+            <IconoMetodo tema={ICONOS[k]} />
             <span className={k >= 3 ? 'modulo-numero coral' : 'modulo-numero'}>0{k + 1}</span>
             <h3>{m.titulo}</h3>
             <p>{m.texto}</p>
           </button>
         ))}
         <button className="modulo destacado" onClick={onLaboratorio}>
+          <IconoMetodo tema="propia" />
           <span className="modulo-numero">06</span>
           <h3>Tu propia heurística</h3>
           <p>Combina criterios, pruébala y compárala con los métodos clásicos.</p>

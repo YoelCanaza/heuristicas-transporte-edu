@@ -44,6 +44,8 @@ interface Props {
   red?: boolean;
   /** Método de construcción en curso; permite diagnosticar los errores del modo práctica. */
   metodo?: MetodoInicial;
+  /** Teñir las celdas de la tabla según su costo. */
+  calor?: boolean;
 }
 
 const ETIQUETA_TIPO: Record<Paso['tipo'], string> = {
@@ -168,6 +170,7 @@ export function Reproductor({
   completa = false,
   red = false,
   metodo,
+  calor = false,
 }: Props) {
   const [idx, setIdx] = useState(0);
   const [reproduciendo, setReproduciendo] = useState(false);
@@ -497,7 +500,10 @@ export function Reproductor({
       {/* Los controles se quedan pegados al borde inferior mientras este bloque esté en pantalla. */}
       <div className="reproductor-pasos">
         <div className="reproductor-cuerpo">
-          <section className="tarjeta tabla-tarjeta" aria-label="Tabla de transporte">
+          <section
+            className={paso.tipo === 'optimo' ? 'tarjeta tabla-tarjeta en-optimo' : 'tarjeta tabla-tarjeta'}
+            aria-label="Tabla de transporte"
+          >
             <TablaTransporte
               problema={problema}
               paso={visible}
@@ -505,9 +511,10 @@ export function Reproductor({
               marcada={ej.marcada}
               penalEditable={penalEditable}
               resaltadas={explorable ? alternativas : enFin ? rutasMostradas.map((r) => r.celda) : undefined}
+              calor={calor}
             />
             {red && <VistaRed problema={problema} paso={visible} pulso={idx} />}
-            <Leyenda paso={visible} problema={problema} />
+            <Leyenda paso={visible} problema={problema} calor={calor} />
           </section>
 
           <aside className="tarjeta explicacion" aria-live="polite">
@@ -521,6 +528,7 @@ export function Reproductor({
               <h2>{paso.titulo}</h2>
               <TextoConGlosario texto={paso.explicacion} />
               {paso.ciclo && <Formula problema={problema} paso={paso} />}
+              {paso.tipo === 'optimo' && <Cierre problema={problema} pasos={pasos} fases={fases} final={paso} />}
             </div>
             {ej.aviso && <p className={ej.aviso.ok ? 'feedback ok' : 'feedback error'}>{ej.aviso.texto}</p>}
             {explorable && (
@@ -767,5 +775,50 @@ function TotalAnimado({ problema, x }: { problema: Problema; x: number[][] }) {
       <span aria-hidden="true">{numerico ? fmt(entero ? Math.round(animado) : animado) : texto}</span>
       <span className="solo-lector">{texto}</span>
     </strong>
+  );
+}
+
+/**
+ * Resumen al llegar al óptimo: de dónde se partió, a dónde se llegó y cuántas mejoras hicieron
+ * falta. Solo aparece si hubo fase de optimización.
+ */
+function Cierre({ problema, pasos, fases, final }: { problema: Problema; pasos: Paso[]; fases: Fase[]; final: Paso }) {
+  const optimizacion = fases.find((f) => f.tipo === 'optimizacion');
+  if (!optimizacion || optimizacion.desde === 0) return null;
+  const inicial = pasos[optimizacion.desde - 1];
+  const mejoras = pasos.filter((s) => s.tipo === 'pivoteo').length;
+  const antes = total(problema, inicial.x);
+  const ahora = total(problema, final.x);
+  // Con rutas prohibidas en uso los totales llevan la letra M y la diferencia no dice nada.
+  const comparable = fmtTotal(problema, inicial.x) === fmt(antes) && fmtTotal(problema, final.x) === fmt(ahora);
+  const diferencia = Math.abs(antes - ahora);
+  const palabra = problema.utilidades ? 'Utilidad' : 'Costo';
+  return (
+    <div className="cierre">
+      <p className="eyebrow">Resumen del recorrido</p>
+      <dl>
+        <div>
+          <dt>{palabra} inicial</dt>
+          <dd>{fmtTotal(problema, inicial.x)}</dd>
+        </div>
+        <div className="cierre-flecha" aria-hidden="true">
+          →
+        </div>
+        <div className="cierre-optimo">
+          <dt>
+            {palabra} óptim{problema.utilidades ? 'a' : 'o'}
+          </dt>
+          <dd>{fmtTotal(problema, final.x)}</dd>
+        </div>
+      </dl>
+      <p>
+        {mejoras === 0
+          ? 'La solución inicial ya era óptima: no hizo falta ninguna mejora.'
+          : `${mejoras} ${mejoras === 1 ? 'mejora' : 'mejoras'}` +
+            (comparable && diferencia > 0 && antes !== 0
+              ? ` · ${problema.utilidades ? 'ganancia' : 'ahorro'} de ${fmt(diferencia)} (${fmt((diferencia / Math.abs(antes)) * 100)} %)`
+              : '')}
+      </p>
+    </div>
   );
 }

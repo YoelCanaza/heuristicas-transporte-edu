@@ -15,6 +15,8 @@ interface Props {
   cantidadEditable?: CantidadEditable;
   /** Celdas que se resaltan como elegibles (p. ej. las de marginal 0 en el explorador de óptimos). */
   resaltadas?: Celda[];
+  /** Teñir cada celda según su costo: más intenso cuanto más cara es la ruta. */
+  calor?: boolean;
 }
 
 /** Casillas para que el estudiante escriba cuánto envía por cada ruta. */
@@ -42,7 +44,14 @@ export function TablaTransporte({
   penalEditable,
   cantidadEditable,
   resaltadas,
+  calor = false,
 }: Props) {
+  // Costos de las rutas permitidas, para situar cada celda entre la más barata (0) y la más cara (1).
+  const permitidos = p.costos.flatMap((fila, i) => fila.filter((_, j) => !p.prohibidas?.[i]?.[j]));
+  const costoMin = Math.min(...permitidos);
+  const costoMax = Math.max(...permitidos);
+  const intensidad = (i: number, j: number) =>
+    costoMax > costoMin ? (p.costos[i][j] - costoMin) / (costoMax - costoMin) : 0;
   const penal = (tipo: Linea['tipo'], k: number, nombre: string) => {
     const valor = (tipo === 'fila' ? paso.penalFila : paso.penalColumna)![k];
     if (valor == null) return '';
@@ -80,7 +89,7 @@ export function TablaTransporte({
 
   return (
     <div className="tabla-contenedor" ref={contenedor}>
-      <table className="tabla-transporte">
+      <table className={calor ? 'tabla-transporte con-calor' : 'tabla-transporte'}>
         <thead>
           <tr>
             <th />
@@ -121,7 +130,12 @@ export function TablaTransporte({
                     key={d}
                     className={clases.filter(Boolean).join(' ')}
                     data-celda={`${i}-${j}`}
-                    style={escalonado && signo ? ({ '--orden': orden.get(`${i},${j}`) } as CSSProperties) : undefined}
+                    style={
+                      {
+                        ...(escalonado && signo ? { '--orden': orden.get(`${i},${j}`) } : {}),
+                        ...(calor && !prohibida ? { '--calor': intensidad(i, j).toFixed(3) } : {}),
+                      } as CSSProperties
+                    }
                     title={
                       prohibida
                         ? `${o} → ${d}: ruta prohibida (costo M = ${fmt(p.costos[i][j])})`
@@ -325,9 +339,15 @@ function Cantidad({ original, restante }: { original: number; restante?: number 
 }
 
 /** Leyenda de los símbolos y colores de la tabla, según lo que muestra el paso. */
-export function Leyenda({ paso, problema }: { paso: Paso; problema?: Problema }) {
+export function Leyenda({ paso, problema, calor }: { paso: Paso; problema?: Problema; calor?: boolean }) {
   return (
     <div className="leyenda">
+      {calor && (
+        <span>
+          <span className="muestra calor" />
+          Mapa de costos: de la ruta más barata a la más cara
+        </span>
+      )}
       <span>
         <span className="muestra actual" />
         Celda actual

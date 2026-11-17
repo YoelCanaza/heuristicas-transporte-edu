@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NOMBRE_OPTIMIZADOR, optimizar } from '../core/caminoPiedras';
 import type { Optimizador } from '../core/caminoPiedras';
 import { NOMBRE_METODO, resolverMetodo } from '../core/metodos';
@@ -28,6 +28,29 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   const [practica, setPractica] = useState(false);
   const [completa, setCompleta] = useState(true);
   const [red, setRed] = useState(false);
+  const [calor, setCalor] = useState(false);
+  const [presentacion, setPresentacion] = useState(false);
+
+  // En modo presentación se intenta ocupar toda la pantalla; Esc (o salir de pantalla completa) lo cierra.
+  useEffect(() => {
+    if (!presentacion) return;
+    document.documentElement.requestFullscreen?.().catch(() => {
+      // sin pantalla completa el modo funciona igual, dentro de la ventana
+    });
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPresentacion(false);
+    };
+    const alCambiar = () => {
+      if (!document.fullscreenElement) setPresentacion(false);
+    };
+    window.addEventListener('keydown', tecla);
+    document.addEventListener('fullscreenchange', alCambiar);
+    return () => {
+      window.removeEventListener('keydown', tecla);
+      document.removeEventListener('fullscreenchange', alCambiar);
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => undefined);
+    };
+  }, [presentacion]);
 
   const { balanceado, pasos, fases } = useMemo(() => {
     const inicial = resolverMetodo(problema, metodo);
@@ -45,7 +68,17 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   }, [problema, metodo, optimizador, optimizarOn, detallado]);
 
   return (
-    <section className="vista">
+    <section className={presentacion ? 'vista presentacion' : 'vista'}>
+      {presentacion && (
+        <div className="presentacion-barra">
+          <strong>
+            {NOMBRE_METODO[metodo]}
+            {optimizarOn ? ` · ${NOMBRE_OPTIMIZADOR[optimizador]}` : ''}
+          </strong>
+          <span className="ayuda">Flechas ← → para avanzar</span>
+          <button onClick={() => setPresentacion(false)}>Salir (Esc)</button>
+        </div>
+      )}
       <header className="vista-cabecera">
         <div>
           <p className="eyebrow">02 — Aprender</p>
@@ -123,6 +156,17 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
             Preguntar cada decisión
           </label>
         )}
+        <label className="chip-check" title="Tiñe cada celda según su costo: más intenso cuanto más cara es la ruta">
+          <input type="checkbox" checked={calor} onChange={(e) => setCalor(e.target.checked)} />
+          Mapa de costos
+        </label>
+        <button
+          className="chip-boton"
+          title="Tabla y explicación a pantalla completa, con letra grande, para proyectar"
+          onClick={() => setPresentacion(true)}
+        >
+          Modo presentación
+        </button>
       </div>
 
       <div className="teorias">
@@ -139,6 +183,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
         completa={completa}
         red={red}
         metodo={metodo}
+        calor={calor}
       />
     </section>
   );

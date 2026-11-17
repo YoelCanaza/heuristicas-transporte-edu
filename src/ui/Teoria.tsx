@@ -3,12 +3,16 @@ import { CONVENCIONES_GENERALES, TEORIA, VARIANTES } from '../contenido/teoria';
 import type { TemaTeoria } from '../contenido/teoria';
 import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
+import { useAparicion } from './movimiento';
 
 const TEMAS: TemaTeoria[] = ['noroeste', 'costoMinimo', 'vogel', 'piedras', 'modi'];
 
 const esOptimizador = (tema: TemaTeoria): tema is Optimizador => tema === 'piedras' || tema === 'modi';
 
 export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial, optimizador: Optimizador) => void }) {
+  const metodos = useAparicion<HTMLDivElement>();
+  const variantes = useAparicion<HTMLDivElement>();
+
   return (
     <section className="vista">
       <header className="vista-cabecera">
@@ -22,7 +26,7 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial, opt
         </div>
       </header>
 
-      <div className="teoria-grid">
+      <div className="teoria-grid" ref={metodos}>
         {TEMAS.map((tema, k) => {
           const t = TEORIA[tema];
           return (
@@ -66,7 +70,7 @@ export function Teoria({ onPractica }: { onPractica: (metodo: MetodoInicial, opt
       </div>
 
       <h2 className="titulo-seccion titulo-bloque">Variantes del problema</h2>
-      <div className="teoria-grid">
+      <div className="teoria-grid" ref={variantes}>
         {VARIANTES.map((v) => (
           <article key={v.titulo} className="tarjeta teoria-tarjeta">
             <h2>{v.titulo}</h2>

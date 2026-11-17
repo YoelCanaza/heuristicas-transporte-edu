@@ -19,11 +19,12 @@ import type { Tachado } from '../core/diagnostico';
 import type { MetodoInicial } from '../core/metodos';
 import { analizarMiopia, describirPrecio, describirRutaCara } from '../core/miopia';
 import type { Celda, Linea, Paso, Problema } from '../core/tipos';
-import { fmt, fmtCosto, fmtTotal, nombreCelda } from '../core/util';
+import { fmt, fmtCosto, fmtTotal, nombreCelda, total } from '../core/util';
 import type { PenalEditable } from './TablaTransporte';
 import { TextoConGlosario } from './Glosa';
 import { Leyenda, TablaTransporte } from './TablaTransporte';
 import { VistaRed } from './VistaRed';
+import { useValorAnimado } from './movimiento';
 
 export interface Fase {
   /** Índice del primer paso de la fase. */
@@ -503,7 +504,7 @@ export function Reproductor({
             penalEditable={penalEditable}
             resaltadas={explorable ? alternativas : enFin ? rutasMostradas.map((r) => r.celda) : undefined}
           />
-          {red && <VistaRed problema={problema} paso={visible} />}
+          {red && <VistaRed problema={problema} paso={visible} pulso={idx} />}
           <Leyenda paso={visible} problema={problema} />
         </section>
 
@@ -630,7 +631,7 @@ export function Reproductor({
             </p>
           )}
           <div className="costo-grande">
-            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <strong>{fmtTotal(problema, paso.x)}</strong>
+            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <TotalAnimado problema={problema} x={paso.x} />
           </div>
         </aside>
       </div>
@@ -739,5 +740,24 @@ function Formula({ problema: p, paso }: { problema: Problema; paso: Paso }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Total de la solución, que cuenta hasta su nuevo valor al cambiar de paso. Los lectores de
+ * pantalla reciben solo el valor final, no los intermedios.
+ */
+function TotalAnimado({ problema, x }: { problema: Problema; x: number[][] }) {
+  const texto = fmtTotal(problema, x);
+  const valor = total(problema, x);
+  const animado = useValorAnimado(valor);
+  // Con rutas prohibidas en uso el total se escribe con la letra M y no se puede contar.
+  const numerico = texto === fmt(valor);
+  const entero = Number.isInteger(valor);
+  return (
+    <strong>
+      <span aria-hidden="true">{numerico ? fmt(entero ? Math.round(animado) : animado) : texto}</span>
+      <span className="solo-lector">{texto}</span>
+    </strong>
   );
 }

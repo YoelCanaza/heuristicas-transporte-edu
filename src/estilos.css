@@ -2745,3 +2745,457 @@ button.enlace:hover:not(:disabled) {
 .banda-compartido.error {
   padding-left: 1.1rem;
 }
+
+/* ───────── Movimiento y profundidad ─────────
+   Todo lo de esta sección es decorativo o de apoyo: con movimiento reducido no se anima nada
+   y ningún contenido depende de una animación para verse. */
+:root {
+  --brillo-azul: rgba(36, 73, 201, 0.11);
+  --brillo-coral: rgba(217, 68, 47, 0.08);
+  --elevacion: 0 1px 2px rgba(14, 26, 58, 0.05), 0 14px 32px -18px rgba(14, 26, 58, 0.22);
+  --elevacion-alta: 0 2px 4px rgba(14, 26, 58, 0.06), 0 26px 48px -20px rgba(14, 26, 58, 0.32);
+  --sombra-boton: rgba(14, 26, 58, 0.6);
+}
+
+:root[data-theme='dark'] {
+  --brillo-azul: rgba(91, 124, 245, 0.17);
+  --brillo-coral: rgba(255, 140, 122, 0.08);
+  --elevacion: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 36px -18px rgba(0, 0, 0, 0.6);
+  --elevacion-alta: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 30px 54px -20px rgba(0, 0, 0, 0.75);
+  --sombra-boton: rgba(0, 0, 0, 0.7);
+}
+
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Atmósfera de fondo: dos luces tenues con los colores de la marca. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(62rem 42rem at 88% -8%, var(--brillo-azul), transparent 62%),
+    radial-gradient(52rem 38rem at -12% 38%, var(--brillo-coral), transparent 62%);
+}
+
+/* Elevación */
+.tarjeta {
+  box-shadow: var(--elevacion);
+}
+
+button.primario {
+  box-shadow: 0 10px 22px -12px var(--sombra-boton);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.2s,
+    transform 0.15s;
+}
+
+button.primario:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 28px -12px var(--sombra-boton);
+}
+
+button.primario:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.logo span {
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.marca:hover .logo span:nth-child(1) {
+  transform: translate(2px, 2px);
+}
+
+.marca:hover .logo span:nth-child(2) {
+  transform: translate(-2px, 2px);
+}
+
+.marca:hover .logo span:nth-child(3) {
+  transform: translate(2px, -2px);
+}
+
+.marca:hover .logo span:nth-child(4) {
+  transform: translate(-2px, -2px);
+}
+
+/* Cambio de pantalla: la cabecera se queda quieta y el contenido se funde.
+   Su fondo se extiende a todo el ancho para que no se le vean los bordes sobre la atmósfera. */
+.cabecera {
+  view-transition-name: cabecera;
+  box-shadow: 0 0 0 100vmax var(--fondo-cabecera);
+  clip-path: inset(0 -100vmax);
+}
+
+::view-transition-old(root) {
+  animation: salir-pantalla 0.16s ease both;
+}
+
+::view-transition-new(root) {
+  animation: entrar-pantalla 0.3s ease both;
+}
+
+@keyframes salir-pantalla {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes entrar-pantalla {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* Aparición al entrar en pantalla (la clase la pone el navegador solo si puede quitarla). */
+.aparicion > :not(.visto) {
+  opacity: 0;
+}
+
+.aparicion > .visto {
+  animation: aparecer-alto 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  animation-delay: calc(var(--orden, 0) * 70ms);
+}
+
+@keyframes aparecer-alto {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Portada */
+.inicio .hero-texto > * {
+  animation: aparecer-alto 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.inicio .hero-texto > :nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.inicio .hero-texto > :nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.inicio .hero-texto > :nth-child(4) {
+  animation-delay: 0.24s;
+}
+
+.franja {
+  transform-origin: top;
+  animation: crecer-franja 0.7s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+@keyframes crecer-franja {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.hero-grafico {
+  perspective: 1100px;
+  animation: aparecer-alto 0.7s 0.2s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.escena {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--giro-x, 0deg)) rotateY(var(--giro-y, 0deg));
+  transition: transform 0.3s ease-out;
+}
+
+.capa-nodos,
+.capa-rotulo {
+  position: absolute;
+  inset: 0;
+}
+
+.capa-nodos {
+  transform: translateZ(38px);
+  filter: drop-shadow(0 8px 10px var(--sombra));
+}
+
+.capa-rotulo {
+  transform: translateZ(76px);
+  pointer-events: none;
+}
+
+.capa-rotulo .chip-flotante {
+  animation: flotar 6s ease-in-out infinite;
+}
+
+@keyframes flotar {
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.chip-flotante {
+  box-shadow: var(--elevacion-alta);
+}
+
+.chip-optimo strong span {
+  font-size: inherit;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.particula {
+  fill: var(--fondo);
+  opacity: 0;
+}
+
+@supports (offset-path: path('M0 0')) {
+  .particula {
+    offset-rotate: 0deg;
+    animation: circular linear infinite;
+  }
+}
+
+@keyframes circular {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 0.95;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+/* Seis módulos: siempre en filas completas (3 × 2, 2 × 3 o una columna). */
+.modulos {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .modulos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .modulos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.modulo {
+  transition:
+    border-color 0.15s,
+    box-shadow 0.25s,
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.modulo:hover:not(:disabled) {
+  transform: translateY(-5px);
+  box-shadow: var(--elevacion-alta);
+}
+
+/* Tabla: el tachado se dibuja sobre el nombre de la fila o columna. */
+.tabla-contenedor {
+  position: relative;
+}
+
+.tabla-transporte th.tachada {
+  text-decoration: none;
+}
+
+.nombre-linea {
+  padding: 0 0.2em;
+  background: linear-gradient(currentColor, currentColor) no-repeat 0 55% / 0 2px;
+  transition: background-size 0.45s ease;
+}
+
+.tabla-transporte th.tachada .nombre-linea {
+  background-size: 100% 2px;
+}
+
+/* Camino cerrado: los signos aparecen en el orden del recorrido y θ lo recorre. */
+.tabla-transporte .signo {
+  animation: realzar 0.35s ease backwards;
+  animation-delay: calc(var(--orden, 0) * 130ms);
+}
+
+.camino-cerrado {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.camino-linea {
+  fill: none;
+  stroke: var(--tinta);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.5;
+  stroke-dasharray: 5 6;
+}
+
+.camino-cerrado.cerrado .camino-linea {
+  stroke-dasharray: 1;
+  animation: trazar 0.75s ease backwards;
+}
+
+@keyframes trazar {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+.camino-vertice {
+  stroke: var(--superficie);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.camino-cerrado.cerrado .camino-vertice {
+  animation: realzar 0.3s ease backwards;
+  animation-delay: calc(var(--orden, 0) * 130ms);
+}
+
+.camino-vertice.mas {
+  fill: var(--azul);
+}
+
+.camino-vertice.menos {
+  fill: var(--coral);
+}
+
+.camino-theta {
+  opacity: 0;
+}
+
+.camino-theta circle {
+  fill: var(--ambar);
+  stroke: var(--superficie);
+  stroke-width: 2;
+}
+
+.camino-theta text {
+  font-family: var(--fuente);
+  font-size: 14px;
+  font-weight: 800;
+  text-anchor: middle;
+  fill: #0e1a3a;
+}
+
+@supports (offset-path: path('M0 0')) {
+  .camino-theta {
+    offset-rotate: 0deg;
+    animation: recorrer 2.8s ease-in-out 0.8s 2 both;
+  }
+}
+
+@keyframes recorrer {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+/* Vista de red: unidades en viaje por la ruta del paso. */
+.red-nodo circle {
+  transition:
+    fill 0.3s,
+    opacity 0.3s;
+}
+
+.red-nodo {
+  transition: opacity 0.35s;
+}
+
+.red-unidad {
+  opacity: 0;
+  fill: var(--superficie);
+  stroke: var(--tinta);
+  stroke-width: 1.5;
+}
+
+.red-unidad.mas {
+  stroke: var(--azul);
+}
+
+.red-unidad.menos {
+  stroke: var(--coral);
+}
+
+@supports (offset-path: path('M0 0')) {
+  .red-unidad {
+    offset-rotate: 0deg;
+    animation: viajar 0.95s cubic-bezier(0.45, 0, 0.25, 1) both;
+  }
+
+  .red-unidad.mas,
+  .red-unidad.menos {
+    animation-iteration-count: 2;
+  }
+
+  /* Donde se resta θ, las unidades vuelven al origen. */
+  .red-unidad.menos {
+    animation-direction: reverse;
+  }
+}
+
+@keyframes viajar {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  14%,
+  86% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* En pantallas angostas el rótulo de la red taparía los nodos. */
+@media (max-width: 560px) {
+  .capa-rotulo {
+    display: none;
+  }
+}

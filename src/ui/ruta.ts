@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Optimizador } from '../core/caminoPiedras';
 import type { MetodoInicial } from '../core/metodos';
+import { conTransicion } from './movimiento';
 
 export type Vista = 'inicio' | 'problema' | 'aprender' | 'reparto' | 'comparar' | 'laboratorio' | 'teoria';
 
@@ -48,9 +49,16 @@ export function escribirRuta(r: Ruta): string {
 /** Pantalla actual según la dirección; cambiarla actualiza la URL y permite usar atrás/adelante. */
 export function useRuta(): [Ruta, (r: Partial<Ruta>) => void] {
   const [ruta, setRuta] = useState(() => leerRuta(window.location.hash));
+  const vistaActual = useRef(ruta.vista);
+  vistaActual.current = ruta.vista;
 
   useEffect(() => {
-    const alCambiar = () => setRuta(leerRuta(window.location.hash));
+    const alCambiar = () => {
+      const nueva = leerRuta(window.location.hash);
+      // Solo el cambio de pantalla lleva transición; cambiar de método dentro de una pantalla es inmediato.
+      if (nueva.vista !== vistaActual.current) conTransicion(() => setRuta(nueva));
+      else setRuta(nueva);
+    };
     window.addEventListener('hashchange', alCambiar);
     return () => window.removeEventListener('hashchange', alCambiar);
   }, []);

@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties, RefObject } from 'react';
 import type { Celda, Linea, Paso, Problema } from '../core/tipos';
 import { EPS, fmt, fmtCosto } from '../core/util';
 
@@ -61,22 +63,30 @@ export function TablaTransporte({
       />
     );
   };
+  const contenedor = useRef<HTMLDivElement>(null);
   const signos = new Map<string, '+' | '−'>();
-  paso.ciclo?.forEach((c, k) => signos.set(`${c.i},${c.j}`, k % 2 === 0 ? '+' : '−'));
+  const orden = new Map<string, number>();
+  paso.ciclo?.forEach((c, k) => {
+    signos.set(`${c.i},${c.j}`, k % 2 === 0 ? '+' : '−');
+    orden.set(`${c.i},${c.j}`, k);
+  });
+  const cerrado = esCerrado(paso.ciclo);
+  // Los signos aparecen en el orden del recorrido; si el estudiante lo traza a mano, responden al instante.
+  const escalonado = cerrado && !onCeldaClick;
   const conPenal = !!paso.penalFila;
   const conUV = !!paso.u && !!paso.v;
   const elegida = (tipo: 'fila' | 'columna', k: number) =>
     paso.lineaElegida?.tipo === tipo && paso.lineaElegida.k === k;
 
   return (
-    <div className="tabla-contenedor">
+    <div className="tabla-contenedor" ref={contenedor}>
       <table className="tabla-transporte">
         <thead>
           <tr>
             <th />
             {p.destinos.map((d, j) => (
               <th key={d} className={paso.columnaTachada?.[j] ? 'tachada' : ''}>
-                {d}
+                <span className="nombre-linea">{d}</span>
               </th>
             ))}
             <th>OFERTA</th>
@@ -87,7 +97,9 @@ export function TablaTransporte({
         <tbody>
           {p.origenes.map((o, i) => (
             <tr key={o}>
-              <th className={paso.filaTachada?.[i] ? 'tachada' : ''}>{o}</th>
+              <th className={paso.filaTachada?.[i] ? 'tachada' : ''}>
+                <span className="nombre-linea">{o}</span>
+              </th>
               {p.destinos.map((d, j) => {
                 const signo = signos.get(`${i},${j}`);
                 const basica = paso.basica[i][j];
@@ -108,6 +120,8 @@ export function TablaTransporte({
                   <td
                     key={d}
                     className={clases.filter(Boolean).join(' ')}
+                    data-celda={`${i}-${j}`}
+                    style={escalonado && signo ? ({ '--orden': orden.get(`${i},${j}`) } as CSSProperties) : undefined}
                     title={
                       prohibida
                         ? `${o} → ${d}: ruta prohibida (costo M = ${fmt(p.costos[i][j])})`
@@ -191,7 +205,107 @@ export function TablaTransporte({
           )}
         </tbody>
       </table>
+      {paso.ciclo && paso.ciclo.length >= 2 && (
+        <CaminoCerrado
+          contenedor={contenedor}
+          ciclo={paso.ciclo}
+          cerrado={cerrado}
+          conTheta={cerrado && paso.theta !== undefined}
+        />
+      )}
     </div>
+  );
+}
+
+/** true si las celdas forman un camino cerrado: cada una comparte fila o columna con la siguiente. */
+function esCerrado(ciclo?: Celda[]): boolean {
+  if (!ciclo || ciclo.length < 4) return false;
+  return ciclo.every((c, k) => {
+    const s = ciclo[(k + 1) % ciclo.length];
+    return c.i === s.i || c.j === s.j;
+  });
+}
+
+/** Distancia del trazo a la esquina inferior izquierda de cada celda: ahí no tapa ningún número. */
+const SANGRIA = 9;
+
+interface Trazo {
+  puntos: { x: number; y: number }[];
+  ancho: number;
+  alto: number;
+}
+
+/**
+ * El camino cerrado dibujado sobre la tabla, de celda en celda. Cuando ya se conoce θ, una
+ * marca lo recorre desde la celda que entra para mostrar por dónde se mueven las unidades.
+ */
+function CaminoCerrado({
+  contenedor,
+  ciclo,
+  cerrado,
+  conTheta,
+}: {
+  contenedor: RefObject<HTMLDivElement>;
+  ciclo: Celda[];
+  cerrado: boolean;
+  conTheta: boolean;
+}) {
+  const [trazo, setTrazo] = useState<Trazo | null>(null);
+  const clave = ciclo.map((c) => `${c.i}-${c.j}`).join('|');
+
+  useLayoutEffect(() => {
+    const caja = contenedor.current;
+    if (!caja) return;
+    const medir = () => {
+      const base = caja.getBoundingClientRect();
+      const puntos: Trazo['puntos'] = [];
+      for (const celda of clave.split('|')) {
+        const td = caja.querySelector(`[data-celda="${celda}"]`);
+        if (!td) return setTrazo(null);
+        const r = td.getBoundingClientRect();
+        puntos.push({
+          x: r.left - base.left + caja.scrollLeft + SANGRIA,
+          y: r.bottom - base.top + caja.scrollTop - SANGRIA,
+        });
+      }
+      setTrazo({ puntos, ancho: caja.scrollWidth, alto: caja.scrollHeight });
+    };
+    medir();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observador = new ResizeObserver(medir);
+    observador.observe(caja);
+    return () => observador.disconnect();
+  }, [contenedor, clave]);
+
+  if (!trazo) return null;
+  const d = trazo.puntos.map((p, k) => `${k === 0 ? 'M' : 'L'}${p.x} ${p.y}`).join(' ') + (cerrado ? ' Z' : '');
+
+  return (
+    <svg
+      key={clave}
+      className={cerrado ? 'camino-cerrado cerrado' : 'camino-cerrado'}
+      width={trazo.ancho}
+      height={trazo.alto}
+      aria-hidden="true"
+    >
+      <path className="camino-linea" d={d} pathLength={1} />
+      {trazo.puntos.map((p, k) => (
+        <circle
+          key={k}
+          className={k % 2 === 0 ? 'camino-vertice mas' : 'camino-vertice menos'}
+          cx={p.x}
+          cy={p.y}
+          r={4.5}
+          style={{ '--orden': k } as CSSProperties}
+        />
+      ))}
+      {conTheta && (
+        <g className="camino-theta" style={{ offsetPath: `path('${d}')` }}>
+          <circle r={11} />
+          <text y={4.5}>θ</text>
+        </g>
+      )}
+    </svg>
   );
 }
 

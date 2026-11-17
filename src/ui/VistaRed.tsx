@@ -5,6 +5,8 @@ import { fmt, fmtCosto } from '../core/util';
 interface Props {
   problema: Problema;
   paso: Paso;
+  /** Cambia con cada paso: hace que las unidades vuelvan a viajar aunque la ruta sea la misma. */
+  pulso?: number;
 }
 
 const ANCHO = 460;
@@ -33,7 +35,7 @@ function puntoCurva(y0: number, y1: number, t: number): { x: number; y: number }
  * El mismo estado de la tabla, dibujado como red: cada origen envía a cada destino por una
  * ruta cuyo grosor es la cantidad asignada. Se actualiza con cada paso.
  */
-export function VistaRed({ problema: p, paso }: Props) {
+export function VistaRed({ problema: p, paso, pulso = 0 }: Props) {
   const m = p.ofertas.length;
   const n = p.demandas.length;
   const alto = (Math.max(m, n) - 1) * PASO_NODO + 2 * MARGEN;
@@ -75,6 +77,15 @@ export function VistaRed({ problema: p, paso }: Props) {
     });
   }
 
+  // Unidades que se ven viajar en este paso: del origen al destino en la ruta recién asignada;
+  // en un camino cerrado, hacia el destino donde se suma θ y de vuelta al origen donde se resta.
+  const viajes = aristas.flatMap((a) => {
+    if (a.signo) return [{ a, clase: a.signo === '+' ? 'mas' : 'menos', unidades: 2 }];
+    if (paso.tipo === 'asignacion' && a.actual && a.cantidad > 0)
+      return [{ a, clase: 'actual', unidades: 2 + Math.round(3 * (a.cantidad / mayor)) }];
+    return [];
+  });
+
   const descripcion =
     aristas
       .filter((a) => a.cantidad > 0)
@@ -111,6 +122,19 @@ export function VistaRed({ problema: p, paso }: Props) {
             </path>
           );
         })}
+
+        <g key={pulso} aria-hidden="true">
+          {viajes.map(({ a, clase, unidades }) =>
+            Array.from({ length: unidades }, (_, k) => (
+              <circle
+                key={`${a.i}-${a.j}-${k}`}
+                className={`red-unidad ${clase}`}
+                r={5}
+                style={{ offsetPath: `path('${camino(a.i, a.j)}')`, animationDelay: `${k * 130}ms` }}
+              />
+            )),
+          )}
+        </g>
 
         {etiquetas.map((e) => (
           <g key={e.clave} className={`red-etiqueta ${e.clases}`}>

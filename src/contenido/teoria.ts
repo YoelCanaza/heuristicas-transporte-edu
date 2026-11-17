@@ -7,6 +7,17 @@ export interface Teoria {
   /** Decisiones que los libros resuelven de formas distintas y que esta aplicación fija así. */
   convenciones: string[];
   errores: string[];
+  /** Pregunta de comprobación: se responde antes de pasar a la práctica. */
+  pregunta: Pregunta;
+}
+
+export interface Pregunta {
+  texto: string;
+  opciones: string[];
+  /** Índice de la opción correcta. */
+  correcta: number;
+  /** Por qué es esa; se muestra tras responder, acierte o no. */
+  explicacion: string;
 }
 
 export type TemaTeoria = 'noroeste' | 'costoMinimo' | 'vogel' | 'piedras' | 'modi';
@@ -30,6 +41,16 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
       'Tachar la fila y la columna a la vez cuando ambas se agotan: se pierde una celda básica y luego no se pueden cerrar los caminos.',
       'Esperar una buena solución: el método nunca consulta los costos.',
     ],
+    pregunta: {
+      texto: '¿Qué información usa la Esquina Noroeste para elegir la celda?',
+      opciones: [
+        'El menor costo de la tabla',
+        'Solo la posición: la celda más arriba y a la izquierda sin tachar',
+        'La mayor penalización',
+      ],
+      correcta: 1,
+      explicacion: 'Nunca consulta los costos. Por eso es la más rápida de aplicar y, casi siempre, la más cara.',
+    },
   },
   costoMinimo: {
     titulo: 'Costo Mínimo',
@@ -49,6 +70,17 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
       'Buscar el menor costo solo dentro de una fila, en lugar de en toda la tabla disponible.',
       'Olvidar descontar la oferta y la demanda después de cada asignación.',
     ],
+    pregunta: {
+      texto: 'Costo Mínimo eligió siempre la celda más barata. ¿Por qué su solución puede no ser la óptima?',
+      opciones: [
+        'Porque no respeta las ofertas y las demandas',
+        'Porque al agotar las rutas baratas puede quedar obligado a usar rutas muy caras al final',
+        'Porque no mira los costos',
+      ],
+      correcta: 1,
+      explicacion:
+        'Cada asignación tacha una fila o una columna. Lo que queda para el final se llena con lo que haya, cueste lo que cueste.',
+    },
   },
   vogel: {
     titulo: 'Aproximación de Vogel (VAM)',
@@ -70,6 +102,13 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
       'No recalcular las penalizaciones después de tachar una línea.',
       'Calcular la penalización como costo mayor menos costo menor, en lugar de la diferencia entre los dos menores.',
     ],
+    pregunta: {
+      texto: 'A una fila le quedan sin tachar los costos 4, 9 y 20. ¿Cuál es su penalización?',
+      opciones: ['4', '5', '16'],
+      correcta: 1,
+      explicacion:
+        'Es la diferencia entre sus dos menores costos: 9 − 4 = 5. Mide cuánto se pierde si no se usa la ruta más barata de la fila.',
+    },
   },
   piedras: {
     titulo: 'Camino de las Piedras (Stepping Stone)',
@@ -92,6 +131,13 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
       'Usar una celda vacía como esquina del camino: solo se puede girar en celdas básicas.',
       'Tomar θ como la menor asignación de todo el camino, en lugar de solo entre las celdas con signo −.',
     ],
+    pregunta: {
+      texto: 'Una celda vacía tiene costo marginal −9 y θ = 5. Si entra a la base, ¿qué pasa con el costo total?',
+      opciones: ['Baja 45', 'Sube 45', 'Baja 9'],
+      correcta: 0,
+      explicacion:
+        'El costo cambia en θ · marginal = 5 · (−9) = −45. Es lo que ocurre en la primera iteración del ejemplo: de 520 a 475.',
+    },
   },
   modi: {
     titulo: 'MODI (método u-v)',
@@ -117,6 +163,13 @@ export const TEORIA: Record<TemaTeoria, Teoria> = {
       'Seguir con los u y v de la iteración anterior: hay que recalcularlos cada vez que cambia la base.',
       'Equivocarse con los signos al restar un valor negativo: 8 − (−2) es 10.',
     ],
+    pregunta: {
+      texto: '¿Qué condición cumplen los valores u y v en cada celda básica?',
+      opciones: ['u + v = costo de la celda', 'u − v = costo de la celda', 'u + v = 0'],
+      correcta: 0,
+      explicacion:
+        'Con esa condición se despejan todos los u y v a partir de uno fijado en 0. Después, el costo marginal de cada celda vacía es costo − u − v.',
+    },
   },
 };
 

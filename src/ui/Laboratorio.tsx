@@ -98,6 +98,84 @@ function Opciones<T extends string>({
   );
 }
 
+const ETAPAS = [
+  { titulo: 'Reflexiona', ayuda: 'Qué mira cada método' },
+  { titulo: 'Diseña', ayuda: 'Arma tu regla' },
+  { titulo: 'Prueba', ayuda: 'Síguela paso a paso' },
+  { titulo: 'Experimenta', ayuda: 'Cientos de problemas' },
+  { titulo: 'Bitácora', ayuda: 'Anota y compara' },
+];
+
+/** Qué información consulta cada método clásico: costos, costo de oportunidad y cantidades. */
+const QUE_MIRA: { metodo: string; celdas: { si: boolean; nota?: string }[] }[] = [
+  { metodo: 'Esquina Noroeste', celdas: [{ si: false }, { si: false }, { si: false, nota: 'Solo para asignar' }] },
+  {
+    metodo: 'Costo Mínimo',
+    celdas: [
+      { si: true, nota: 'El menor de toda la tabla' },
+      { si: false },
+      { si: false, nota: 'Solo para desempatar' },
+    ],
+  },
+  {
+    metodo: 'Vogel',
+    celdas: [
+      { si: true },
+      { si: true, nota: 'Diferencia entre los dos menores costos' },
+      { si: false, nota: 'Solo para desempatar' },
+    ],
+  },
+];
+
+const PREGUNTAS = [
+  {
+    pregunta: '¿Por qué el Costo Mínimo puede terminar usando rutas muy caras al final?',
+    pista:
+      'Pista: cada asignación tacha una fila o una columna. Mira en Aprender qué celdas le quedan disponibles a Costo Mínimo en sus últimos pasos.',
+  },
+  {
+    pregunta:
+      '¿Qué otra medida, además de la penalización de Vogel, podría indicar que una fila o columna es «urgente»?',
+    pista:
+      'Pista: piensa en el rango de sus costos o en cuánta oferta o demanda le falta cubrir. En la etapa 2 puedes probar ambas.',
+  },
+  {
+    pregunta: '¿Conviene más llenar primero las celdas que permiten mover muchas unidades?',
+    pista:
+      'Pista: una celda grande y cara pesa mucho en el costo total. Compruébalo: da peso solo a «Cantidad grande» y mira la brecha en la etapa 4.',
+  },
+];
+
+/** La regla del estudiante como una secuencia de decisiones, para leerla de un golpe. */
+function receta(c: ConfigHeuristica): { titulo: string; detalle: string }[] {
+  const empate = { titulo: 'Si hay empate', detalle: ETIQUETA_DESEMPATE[c.desempate] };
+  const asignar = { titulo: 'Asigna', detalle: 'Lo máximo posible, y tacha la línea agotada' };
+  if (c.modo === 'puntaje') {
+    const activos = (Object.keys(ETIQUETA_PESO) as (keyof Pesos)[]).filter((k) => c.pesos[k] > 0);
+    return [
+      {
+        titulo: 'Puntúa cada celda libre',
+        detalle:
+          activos.length === 0
+            ? 'Todos los pesos están en 0: decide solo el desempate'
+            : activos.map((k) => `${ETIQUETA_PESO[k].titulo} × ${c.pesos[k]}`).join(' · '),
+      },
+      { titulo: 'Elige la celda', detalle: 'La de mejor puntaje' },
+      empate,
+      asignar,
+    ];
+  }
+  return [
+    ...(c.modo === 'linea' ? [{ titulo: 'Elige la fila o columna', detalle: ETIQUETA_LINEA[c.criterioLinea] }] : []),
+    {
+      titulo: c.modo === 'linea' ? 'Dentro de ella, la celda' : 'Elige la celda',
+      detalle: ETIQUETA_CELDA[c.criterioCelda],
+    },
+    empate,
+    asignar,
+  ];
+}
+
 const TITULO_FAMILIA = Object.fromEntries(
   (Object.keys(ETIQUETA_FAMILIA) as Familia[]).map((k) => [k, ETIQUETA_FAMILIA[k].titulo]),
 ) as Record<Familia, string>;
@@ -223,6 +301,8 @@ export function Laboratorio({ problema }: { problema: Problema }) {
   };
 
   const enCurso = hechas !== null;
+  // Etapas ya recorridas: diseñar cuenta cuando la regla deja de ser un método clásico.
+  const etapaAlcanzada = bitacora.length > 0 ? 5 : resultado ? 4 : equivale ? 0 : 2;
 
   return (
     <section className="vista">
@@ -237,7 +317,23 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         </div>
       </header>
 
-      <article className="tarjeta etapa">
+      <nav className="riel" aria-label="Etapas del laboratorio">
+        {ETAPAS.map((e, k) => (
+          <button
+            key={e.titulo}
+            className={k < etapaAlcanzada ? 'hecha' : ''}
+            onClick={() => document.getElementById(`etapa-${k + 1}`)?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            <span className="riel-numero">{k < etapaAlcanzada ? '✓' : k + 1}</span>
+            <span>
+              <strong>{e.titulo}</strong>
+              <small>{e.ayuda}</small>
+            </span>
+          </button>
+        ))}
+      </nav>
+
+      <article className="tarjeta etapa" id="etapa-1">
         <h2>
           <span className="numero">1</span> Reflexiona
         </h2>
@@ -256,37 +352,32 @@ export function Laboratorio({ problema }: { problema: Problema }) {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Esquina Noroeste</td>
-                <td>No</td>
-                <td>No</td>
-                <td>Solo para asignar</td>
-              </tr>
-              <tr>
-                <td>Costo Mínimo</td>
-                <td>Sí, el menor de toda la tabla</td>
-                <td>No</td>
-                <td>Solo para desempatar</td>
-              </tr>
-              <tr>
-                <td>Vogel</td>
-                <td>Sí</td>
-                <td>Sí: diferencia entre los dos menores costos</td>
-                <td>Solo para desempatar</td>
-              </tr>
+              {QUE_MIRA.map((f) => (
+                <tr key={f.metodo}>
+                  <th scope="row">{f.metodo}</th>
+                  {f.celdas.map((c, k) => (
+                    <td key={k}>
+                      <span className={c.si ? 'distintivo si' : 'distintivo no'}>{c.si ? 'Sí' : 'No'}</span>
+                      {c.nota && <span className="distintivo-nota">{c.nota}</span>}
+                    </td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-        <ul className="preguntas">
-          <li>¿Por qué el Costo Mínimo puede terminar usando rutas muy caras al final?</li>
-          <li>
-            ¿Qué otra medida, además de la penalización de Vogel, podría indicar que una fila o columna es "urgente"?
-          </li>
-          <li>¿Conviene más llenar primero las celdas que permiten mover muchas unidades?</li>
-        </ul>
+        <p className="ayuda">Piensa cada pregunta antes de abrir su pista; las vas a responder con tu propia regla.</p>
+        <div className="preguntas">
+          {PREGUNTAS.map((q) => (
+            <details key={q.pregunta} className="teoria">
+              <summary>{q.pregunta}</summary>
+              <p>{q.pista}</p>
+            </details>
+          ))}
+        </div>
       </article>
 
-      <article className="tarjeta etapa">
+      <article className="tarjeta etapa" id="etapa-2">
         <h2>
           <span className="numero">2</span> Diseña tu regla
         </h2>
@@ -366,9 +457,18 @@ export function Laboratorio({ problema }: { problema: Problema }) {
             </button>
           ))}
         </div>
-        <p className="descripcion-regla">
-          <strong>{nombre}:</strong> {describir(config)}
-        </p>
+        <div className="receta" aria-label={`${nombre}: ${describir(config)}`}>
+          <p className="eyebrow">Así decide «{nombre}» en cada iteración</p>
+          <ol>
+            {receta(config).map((paso) => (
+              <li key={paso.titulo}>
+                <strong>{paso.titulo}</strong>
+                <span>{paso.detalle}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="receta-repetir">↻ Se repite hasta tachar toda la tabla.</p>
+        </div>
         {equivale && (
           <p className="aviso">
             Esta configuración equivale a <strong>{equivale}</strong>. ¡Modifica algún criterio para crear algo nuevo!
@@ -376,7 +476,7 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         )}
       </article>
 
-      <article className="tarjeta etapa" ref={etapaPrueba}>
+      <article className="tarjeta etapa" id="etapa-3" ref={etapaPrueba}>
         <h2>
           <span className="numero">3</span> {peorCaso ? 'Pruébala en su peor caso' : 'Pruébala en el problema actual'}
         </h2>
@@ -402,7 +502,7 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         />
       </article>
 
-      <article className="tarjeta etapa">
+      <article className="tarjeta etapa" id="etapa-4">
         <h2>
           <span className="numero">4</span> Ponla a prueba
         </h2>
@@ -497,7 +597,7 @@ export function Laboratorio({ problema }: { problema: Problema }) {
         )}
       </article>
 
-      <article className="tarjeta etapa">
+      <article className="tarjeta etapa" id="etapa-5">
         <h2>
           <span className="numero">5</span> Bitácora
         </h2>

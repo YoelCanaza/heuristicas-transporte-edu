@@ -65,6 +65,29 @@ export function Inicio({ onMetodo, onTeoria, onLaboratorio }: Props) {
   return (
     <section className="inicio">
       <div className="hero" ref={hero}>
+        {/* Las fórmulas del problema de transporte, como marca de agua detrás de la portada. */}
+        <div className="ecuaciones" aria-hidden="true">
+          <span style={{ left: '43%', top: '2%' }}>
+            min Z = ΣΣ c<sub>ij</sub> x<sub>ij</sub>
+          </span>
+          <span style={{ left: '47%', top: '34%' }}>
+            Σ<sub>j</sub> x<sub>ij</sub> = a<sub>i</sub>
+          </span>
+          <span style={{ left: '44%', top: '58%' }}>
+            Σ<sub>i</sub> x<sub>ij</sub> = b<sub>j</sub>
+          </span>
+          <span style={{ left: '40%', top: '86%' }}>
+            u<sub>i</sub> + v<sub>j</sub> = c<sub>ij</sub>
+          </span>
+          <span style={{ left: '62%', top: '96%' }}>
+            θ = min x<sub>ij</sub>
+            <sup>−</sup>
+          </span>
+          <span style={{ left: '2%', top: '-6%' }}>m + n − 1</span>
+          <span style={{ left: '88%', top: '-5%' }}>
+            x<sub>ij</sub> ≥ 0
+          </span>
+        </div>
         <div className="hero-texto">
           <p className="eyebrow">Software educativo · Investigación de Operaciones</p>
           <div className="hero-titulo-envoltura">

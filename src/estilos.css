@@ -3371,3 +3371,753 @@ h3 {
   margin-inline: calc(-1 * clamp(16px, 4.5vw, 64px));
   padding-inline: clamp(16px, 4.5vw, 64px);
 }
+
+/* ───────── Aprender: controles siempre a mano ─────────
+   El botón Siguiente no se mueve aunque la explicación crezca: los controles se pegan al
+   borde inferior de la pantalla mientras la tabla y la explicación estén a la vista. */
+.reproductor-pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.reproductor-pasos > .controles {
+  position: sticky;
+  bottom: 12px;
+  z-index: 6;
+  box-shadow: var(--elevacion-alta);
+}
+
+/* En pantallas bajas o angostas la línea de tiempo cede su sitio a los botones. */
+@media (max-width: 700px), (max-height: 620px) {
+  .reproductor-pasos > .controles .linea-tiempo {
+    display: none;
+  }
+}
+
+/* ───────── Portada: fórmulas de fondo ───────── */
+.hero {
+  position: relative;
+  isolation: isolate;
+}
+
+.ecuaciones {
+  position: absolute;
+  inset: -2rem 0;
+  z-index: -1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ecuaciones span {
+  position: absolute;
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: clamp(1.1rem, 1.7vw, 1.7rem);
+  white-space: nowrap;
+  color: var(--tinta);
+  opacity: 0.13;
+  animation: derivar 16s ease-in-out infinite alternate;
+}
+
+.ecuaciones span:nth-child(2n) {
+  animation-duration: 21s;
+  animation-direction: alternate-reverse;
+}
+
+.ecuaciones span:nth-child(3n) {
+  animation-duration: 26s;
+  font-size: clamp(1rem, 1.3vw, 1.35rem);
+}
+
+.ecuaciones sub,
+.ecuaciones sup {
+  font-size: 0.6em;
+}
+
+@keyframes derivar {
+  from {
+    transform: translate(-10px, 6px) rotate(-1.5deg);
+  }
+  to {
+    transform: translate(12px, -8px) rotate(1.5deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .ecuaciones {
+    display: none;
+  }
+}
+
+/* ───────── Teoría como lección ─────────
+   Primero el mapa, después cada método: idea, pasos, un ejemplo que se recorre y una pregunta. */
+.mapa {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mapa-etapa {
+  position: relative;
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.mapa-etapa + .mapa-etapa {
+  border-left: 1px solid var(--linea);
+}
+
+/* Flecha entre etapas. */
+.mapa-etapa + .mapa-etapa::before {
+  content: '→';
+  position: absolute;
+  left: -0.75rem;
+  top: 1.35rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  font-size: 0.85rem;
+  color: var(--apagado);
+}
+
+.mapa-etapa h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.mapa-etapa p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--tinta-suave);
+}
+
+.mapa-numero {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--superficie-2);
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-weight: 600;
+}
+
+.mapa-final {
+  background: var(--azul-suave);
+}
+
+.mapa-final .mapa-numero {
+  background: var(--azul);
+  color: var(--superficie);
+  font-style: normal;
+}
+
+.mapa-metodos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.mapa-metodo {
+  min-height: 36px;
+  padding: 0 0.85rem;
+  font-size: 0.85rem;
+}
+
+.mapa-metodo.activo {
+  background: var(--marino);
+  border-color: var(--marino);
+  color: var(--sobre-marino);
+}
+
+.vistazo {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  gap: 1.5rem 2.5rem;
+  align-items: center;
+}
+
+.vistazo .titulo-seccion {
+  margin-bottom: 0.5rem;
+}
+
+.vistazo .ayuda {
+  margin: 0;
+}
+
+.vistazo-barras {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr) auto auto;
+  gap: 0.7rem 1rem;
+  align-items: center;
+}
+
+.vistazo-barras li {
+  display: contents;
+}
+
+.vistazo-nombre {
+  font-weight: 700;
+}
+
+.vistazo-pista {
+  position: relative;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--superficie-2);
+}
+
+.vistazo-barra {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--azul);
+  transform-origin: left;
+  animation: crecer-barra 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+/* Marca del costo óptimo. */
+.vistazo-pista::after {
+  content: '';
+  position: absolute;
+  left: var(--optimo);
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  background: var(--coral-vivo);
+}
+
+.vistazo-barras strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+}
+
+.vistazo-nota {
+  font-size: 0.85rem;
+  color: var(--apagado);
+}
+
+@keyframes crecer-barra {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.leccion {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  scroll-margin-top: 6rem;
+}
+
+.leccion-pestanas {
+  align-self: flex-start;
+}
+
+.leccion-pestanas button {
+  gap: 0.5rem;
+}
+
+.leccion-orden {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.leccion-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 1.75rem 2.5rem;
+  align-items: start;
+  animation: aparecer 0.3s ease both;
+}
+
+.leccion-texto,
+.leccion-practica {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.leccion-practica > .primario {
+  align-self: flex-start;
+}
+
+.leccion-notas {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.leccion h2 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.leccion h3,
+.nota-error h3 {
+  margin: 0;
+  font-family: var(--fuente);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+
+.leccion-idea {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: var(--tinta-suave);
+}
+
+/* Pasos numerados con una línea que los une. */
+.leccion-pasos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: paso;
+  display: flex;
+  flex-direction: column;
+}
+
+.leccion-pasos li {
+  counter-increment: paso;
+  position: relative;
+  margin: 0;
+  padding: 0 0 1rem 2.75rem;
+  color: var(--tinta-suave);
+}
+
+.leccion-pasos li::before {
+  content: counter(paso);
+  position: absolute;
+  left: 0;
+  top: -0.15rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--marino);
+  color: var(--sobre-marino);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.leccion-pasos li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(0.9rem - 1px);
+  top: 1.75rem;
+  bottom: 0.1rem;
+  width: 2px;
+  background: var(--linea);
+}
+
+.leccion-pasos li:last-child {
+  padding-bottom: 0;
+}
+
+.leccion-balance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 0.75rem;
+}
+
+.leccion-balance > div {
+  padding: 0.9rem 1rem;
+  border-radius: var(--radio-sm);
+  border-left: 4px solid var(--azul);
+  background: var(--azul-suave);
+}
+
+.leccion-balance > .balance-menos {
+  border-left-color: var(--coral-vivo);
+  background: var(--coral-suave);
+}
+
+.leccion-balance h3 {
+  color: var(--tinta);
+}
+
+.leccion-balance p {
+  margin: 0.3rem 0 0;
+  font-size: 0.95rem;
+}
+
+.nota-error {
+  padding: 1rem 1.25rem;
+  border-radius: var(--radio-sm);
+  background: var(--ambar-suave);
+}
+
+.nota-error h3 {
+  color: var(--tinta);
+}
+
+.nota-error ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--tinta);
+}
+
+.nota-error li {
+  margin: 0.3rem 0;
+}
+
+.teoria-tarjeta .leccion-pasos {
+  padding-left: 0;
+  margin-top: 0.4rem;
+}
+
+.teoria-tarjeta .nota-error {
+  margin-top: 0.5rem;
+}
+
+.demo {
+  margin: 0;
+  padding: 1.1rem;
+  border-radius: var(--radio);
+  background: var(--fondo);
+  border: 1px solid var(--linea);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.demo figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.demo figcaption strong {
+  font-family: var(--fuente-titulo);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* La tabla del ejemplo es más compacta que la de Aprender. */
+.demo .tabla-transporte {
+  border-spacing: 4px;
+}
+
+.demo .tabla-transporte .celda {
+  width: 68px;
+  min-width: 60px;
+  height: 62px;
+  border-radius: 12px;
+}
+
+.demo .tabla-transporte .valor {
+  font-size: 1.15rem;
+}
+
+.demo .tabla-transporte td.total {
+  min-width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.demo .tabla-transporte tr.fila-demanda td.total {
+  height: 46px;
+}
+
+.demo .tabla-transporte .penal {
+  min-width: 52px;
+  border-radius: 12px;
+}
+
+.demo-explicacion {
+  min-height: 5.2em;
+  font-size: 0.92rem;
+  color: var(--tinta-suave);
+}
+
+.demo-explicacion p {
+  margin: 0;
+}
+
+.demo-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.comprobacion {
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radio);
+  border: 1.5px dashed var(--azul);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.comprobacion-texto {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.comprobacion-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.comprobacion-opciones button {
+  justify-content: flex-start;
+  text-align: left;
+  border-radius: 14px;
+  padding: 0.6rem 1rem;
+  font-weight: 500;
+}
+
+.comprobacion-opciones button.bien {
+  background: var(--azul-suave);
+  border-color: var(--azul);
+  font-weight: 700;
+}
+
+.comprobacion-opciones button.bien::after {
+  content: '✓';
+  margin-left: auto;
+  color: var(--azul);
+}
+
+.comprobacion-opciones button.mal {
+  background: var(--coral-suave);
+  border-color: var(--coral);
+}
+
+.comprobacion-opciones button.mal::after {
+  content: '✕';
+  margin-left: auto;
+  color: var(--coral);
+}
+
+.comprobacion .aviso {
+  margin: 0;
+}
+
+@media (max-width: 1000px) {
+  .mapa {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mapa-etapa + .mapa-etapa {
+    border-left: none;
+    border-top: 1px solid var(--linea);
+  }
+
+  .mapa-etapa + .mapa-etapa::before {
+    content: '↓';
+    left: 1.5rem;
+    top: -0.75rem;
+  }
+
+  .vistazo,
+  .leccion-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .vistazo-barras {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .vistazo-pista,
+  .vistazo-nota {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ───────── Laboratorio: orientación y lectura visual ───────── */
+.riel {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.riel button {
+  justify-content: flex-start;
+  gap: 0.7rem;
+  min-height: 60px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 18px;
+  text-align: left;
+  font-weight: 400;
+}
+
+.riel button > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.riel small {
+  font-size: 0.78rem;
+  color: var(--apagado);
+}
+
+.riel-numero {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--superficie-2);
+  font-family: var(--fuente-titulo);
+  font-weight: 600;
+}
+
+.riel button.hecha .riel-numero {
+  background: var(--azul);
+  color: var(--superficie);
+}
+
+.etapa {
+  scroll-margin-top: 6rem;
+}
+
+.tabla-simple tbody th {
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta);
+}
+
+.distintivo {
+  display: inline-block;
+  min-width: 2.6rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.distintivo.si {
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+
+.distintivo.no {
+  background: var(--superficie-2);
+  color: var(--apagado);
+}
+
+.distintivo-nota {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+}
+
+.preguntas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.preguntas .teoria p {
+  margin: 0;
+}
+
+.receta {
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radio);
+  background: var(--superficie-2);
+}
+
+.receta ol {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 0.6rem 1.6rem;
+  counter-reset: receta;
+}
+
+.receta li {
+  counter-increment: receta;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radio-sm);
+  background: var(--superficie);
+  box-shadow: var(--elevacion);
+}
+
+.receta li strong {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--apagado);
+}
+
+.receta li strong::before {
+  content: counter(receta) ' · ';
+  color: var(--azul);
+}
+
+.receta li + li::before {
+  content: '→';
+  position: absolute;
+  left: -1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--apagado);
+}
+
+.receta-repetir {
+  margin: 0.8rem 0 0;
+  font-size: 0.88rem;
+  color: var(--tinta-suave);
+}
+
+@media (max-width: 900px) {
+  .riel {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .receta li + li::before {
+    display: none;
+  }
+}
+
+/* Las pestañas de la lección pueden ocupar varias filas en pantallas angostas. */
+.leccion-pestanas {
+  border-radius: 28px;
+}

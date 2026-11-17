@@ -494,207 +494,215 @@ export function Reproductor({
 
   return (
     <div className="reproductor">
-      <div className="reproductor-cuerpo">
-        <section className="tarjeta tabla-tarjeta" aria-label="Tabla de transporte">
-          <TablaTransporte
-            problema={problema}
-            paso={visible}
-            onCeldaClick={conClic ? alClic : explorable ? alExplorar : undefined}
-            marcada={ej.marcada}
-            penalEditable={penalEditable}
-            resaltadas={explorable ? alternativas : enFin ? rutasMostradas.map((r) => r.celda) : undefined}
-          />
-          {red && <VistaRed problema={problema} paso={visible} pulso={idx} />}
-          <Leyenda paso={visible} problema={problema} />
-        </section>
+      {/* Los controles se quedan pegados al borde inferior mientras este bloque esté en pantalla. */}
+      <div className="reproductor-pasos">
+        <div className="reproductor-cuerpo">
+          <section className="tarjeta tabla-tarjeta" aria-label="Tabla de transporte">
+            <TablaTransporte
+              problema={problema}
+              paso={visible}
+              onCeldaClick={conClic ? alClic : explorable ? alExplorar : undefined}
+              marcada={ej.marcada}
+              penalEditable={penalEditable}
+              resaltadas={explorable ? alternativas : enFin ? rutasMostradas.map((r) => r.celda) : undefined}
+            />
+            {red && <VistaRed problema={problema} paso={visible} pulso={idx} />}
+            <Leyenda paso={visible} problema={problema} />
+          </section>
 
-        <aside className="tarjeta explicacion" aria-live="polite">
-          <div className="explicacion-cabecera">
-            <span className={`etiqueta etiqueta-${paso.tipo}`}>{ETIQUETA_TIPO[paso.tipo]}</span>
-            <span className="contador">
-              Paso {idx + 1} de {pasos.length}
-            </span>
-          </div>
-          <div className="explicacion-cuerpo" key={idx}>
-            <h2>{paso.titulo}</h2>
-            <TextoConGlosario texto={paso.explicacion} />
-            {paso.ciclo && <Formula problema={problema} paso={paso} />}
-          </div>
-          {ej.aviso && <p className={ej.aviso.ok ? 'feedback ok' : 'feedback error'}>{ej.aviso.texto}</p>}
-          {explorable && (
-            <div className="explorador">
-              <p className="pregunta">Óptimos alternativos</p>
-              <p>
-                {alternativas.length > 0
-                  ? `Las celdas marcadas tienen costo marginal 0: pueden entrar a la base sin cambiar ${problema.utilidades ? 'la utilidad' : 'el costo'}. Haz clic en una para ver otra solución óptima.`
-                  : 'En esta base ninguna celda tiene marginal 0.'}
-              </p>
-              {avisoExploracion && <p className="feedback error">{avisoExploracion}</p>}
-              {explorados.length > 0 && (
-                <>
-                  <p className="ayuda">
-                    Soluciones óptimas distintas vistas: {distintas}. Cambios de base: {explorados.length}.
-                  </p>
-                  <div className="respuesta">
-                    <button onClick={() => setExploracion({ idx, pasos: explorados.slice(0, -1), aviso: null })}>
-                      Deshacer
-                    </button>
-                    <button onClick={() => setExploracion({ idx, pasos: [], aviso: null })}>
-                      Volver a la solución del método
-                    </button>
-                  </div>
-                </>
-              )}
+          <aside className="tarjeta explicacion" aria-live="polite">
+            <div className="explicacion-cabecera">
+              <span className={`etiqueta etiqueta-${paso.tipo}`}>{ETIQUETA_TIPO[paso.tipo]}</span>
+              <span className="contador">
+                Paso {idx + 1} de {pasos.length}
+              </span>
             </div>
-          )}
-          {miopia && !pregunta && (
-            <div className="explorador">
-              <p className="pregunta">{textoMiopia.titulo}</p>
-              <p>{textoMiopia.intro}</p>
-              <p>{describirPrecio(problema, miopia, paso.x)}</p>
-              {rutasMostradas.length > 0 ? (
-                <>
-                  <p className="ayuda">
-                    {rutasMostradas.length === 1
-                      ? 'La celda marcada en la tabla usó una ruta cara porque una decisión anterior cerró otra más barata:'
-                      : `Las ${rutasMostradas.length} celdas marcadas en la tabla usaron rutas caras porque decisiones anteriores cerraron otras más baratas${miopia.rutas.length > rutasMostradas.length ? ` (se muestran las ${rutasMostradas.length} que más pesan de ${miopia.rutas.length})` : ''}:`}
-                  </p>
-                  <ol className="lista-miopia">
-                    {rutasMostradas.map((r) => (
-                      <li key={r.paso}>
-                        {describirRutaCara(problema, r)}{' '}
-                        <button className="enlace" onClick={() => ir(r.cierre)}>
-                          Ver el paso {r.cierre + 1}
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="ayuda">
-                    El costo de más por unidad es una pista, no el precio exacto: corregir una ruta cambia otras. El
-                    precio real es la distancia al óptimo.
-                  </p>
-                </>
-              ) : (
-                <p className="ayuda">
-                  Ninguna asignación tuvo que usar una ruta más cara de su fila o columna por una decisión anterior.
+            <div className="explicacion-cuerpo" key={idx}>
+              <h2>{paso.titulo}</h2>
+              <TextoConGlosario texto={paso.explicacion} />
+              {paso.ciclo && <Formula problema={problema} paso={paso} />}
+            </div>
+            {ej.aviso && <p className={ej.aviso.ok ? 'feedback ok' : 'feedback error'}>{ej.aviso.texto}</p>}
+            {explorable && (
+              <div className="explorador">
+                <p className="pregunta">Óptimos alternativos</p>
+                <p>
+                  {alternativas.length > 0
+                    ? `Las celdas marcadas tienen costo marginal 0: pueden entrar a la base sin cambiar ${problema.utilidades ? 'la utilidad' : 'el costo'}. Haz clic en una para ver otra solución óptima.`
+                    : 'En esta base ninguna celda tiene marginal 0.'}
                 </p>
-              )}
-            </div>
-          )}
-          {pregunta && (
-            <div className="ejercicio">
-              <p className="pregunta">{pregunta}</p>
-              {(fase === 'cantidad' || fase === 'theta') && (
-                <form
-                  className="respuesta"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    alResponderNumero();
-                  }}
-                >
-                  <input
-                    key={fase}
-                    type="text"
-                    inputMode="decimal"
-                    autoFocus
-                    value={ej.texto}
-                    onChange={(e) => setEjercicio({ ...ej, texto: e.target.value })}
-                    aria-label={fase === 'cantidad' ? 'Cantidad que se asigna' : 'Valor de θ'}
-                  />
-                  <button className="primario" disabled={ej.texto.trim() === ''}>
-                    Comprobar
-                  </button>
-                </form>
-              )}
-              {fase === 'tachar' && (
-                <div className="respuesta">
-                  <button onClick={() => alTachar('fila')}>Fila {origenMeta}</button>
-                  <button onClick={() => alTachar('columna')}>Columna {destinoMeta}</button>
-                  <button onClick={() => alTachar('ambas')}>Las dos</button>
-                </div>
-              )}
-              {textosPista.slice(0, ej.pistas).map((t, k) => (
-                <p key={k} className="pista">
-                  <strong>Pista {k + 1}.</strong> {t}
-                </p>
-              ))}
-              {ej.pistas < MAX_PISTAS && (
-                <button onClick={() => setEjercicio({ ...ej, pistas: ej.pistas + 1 })}>
-                  Pedir pista ({ej.pistas + 1} de {MAX_PISTAS})
-                </button>
-              )}
-            </div>
-          )}
-          {practica && puntaje.resueltas > 0 && (
-            <p className="puntaje">
-              Resueltas sin ayuda: {puntaje.sinAyuda} de {puntaje.resueltas}
-            </p>
-          )}
-          <div className="costo-grande">
-            {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <TotalAnimado problema={problema} x={paso.x} />
-          </div>
-        </aside>
-      </div>
-
-      <section className="tarjeta controles" aria-label="Controles de reproducción">
-        <div className="controles-botones">
-          <button className="boton-icono" onClick={() => ir(0)} disabled={idx === 0} aria-label="Primer paso">
-            <Icono d="M17 6l-6 6 6 6M7 6v12" />
-          </button>
-          <button className="boton-icono" onClick={() => ir(idx - 1)} disabled={idx === 0} aria-label="Paso anterior">
-            <Icono d="M15 6l-6 6 6 6" />
-          </button>
-          {pregunta ? (
-            <button className="primario" onClick={mostrarRespuesta}>
-              Mostrar respuesta
-            </button>
-          ) : (
-            <button className="primario" onClick={() => ir(idx + 1)} disabled={idx === ultimo}>
-              Siguiente
-              <Icono d="M9 6l6 6-6 6" />
-            </button>
-          )}
-          <button className="boton-icono" onClick={() => ir(ultimo)} disabled={idx === ultimo} aria-label="Último paso">
-            <Icono d="M7 6l6 6-6 6M17 6v12" />
-          </button>
-          <button onClick={() => setReproduciendo(!avanzando)} disabled={idx === ultimo}>
-            {avanzando ? (
-              <Icono d="M8 5v14M16 5v14" />
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M7 4l13 8-13 8z" />
-              </svg>
+                {avisoExploracion && <p className="feedback error">{avisoExploracion}</p>}
+                {explorados.length > 0 && (
+                  <>
+                    <p className="ayuda">
+                      Soluciones óptimas distintas vistas: {distintas}. Cambios de base: {explorados.length}.
+                    </p>
+                    <div className="respuesta">
+                      <button onClick={() => setExploracion({ idx, pasos: explorados.slice(0, -1), aviso: null })}>
+                        Deshacer
+                      </button>
+                      <button onClick={() => setExploracion({ idx, pasos: [], aviso: null })}>
+                        Volver a la solución del método
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
-            {avanzando ? 'Pausar' : 'Reproducir'}
-          </button>
-          <select value={ms} onChange={(e) => setMs(Number(e.target.value))} aria-label="Velocidad">
-            {VELOCIDADES.map((v) => (
-              <option key={v.ms} value={v.ms}>
-                {v.etiqueta}
-              </option>
-            ))}
-          </select>
+            {miopia && !pregunta && (
+              <div className="explorador">
+                <p className="pregunta">{textoMiopia.titulo}</p>
+                <p>{textoMiopia.intro}</p>
+                <p>{describirPrecio(problema, miopia, paso.x)}</p>
+                {rutasMostradas.length > 0 ? (
+                  <>
+                    <p className="ayuda">
+                      {rutasMostradas.length === 1
+                        ? 'La celda marcada en la tabla usó una ruta cara porque una decisión anterior cerró otra más barata:'
+                        : `Las ${rutasMostradas.length} celdas marcadas en la tabla usaron rutas caras porque decisiones anteriores cerraron otras más baratas${miopia.rutas.length > rutasMostradas.length ? ` (se muestran las ${rutasMostradas.length} que más pesan de ${miopia.rutas.length})` : ''}:`}
+                    </p>
+                    <ol className="lista-miopia">
+                      {rutasMostradas.map((r) => (
+                        <li key={r.paso}>
+                          {describirRutaCara(problema, r)}{' '}
+                          <button className="enlace" onClick={() => ir(r.cierre)}>
+                            Ver el paso {r.cierre + 1}
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                    <p className="ayuda">
+                      El costo de más por unidad es una pista, no el precio exacto: corregir una ruta cambia otras. El
+                      precio real es la distancia al óptimo.
+                    </p>
+                  </>
+                ) : (
+                  <p className="ayuda">
+                    Ninguna asignación tuvo que usar una ruta más cara de su fila o columna por una decisión anterior.
+                  </p>
+                )}
+              </div>
+            )}
+            {pregunta && (
+              <div className="ejercicio">
+                <p className="pregunta">{pregunta}</p>
+                {(fase === 'cantidad' || fase === 'theta') && (
+                  <form
+                    className="respuesta"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      alResponderNumero();
+                    }}
+                  >
+                    <input
+                      key={fase}
+                      type="text"
+                      inputMode="decimal"
+                      autoFocus
+                      value={ej.texto}
+                      onChange={(e) => setEjercicio({ ...ej, texto: e.target.value })}
+                      aria-label={fase === 'cantidad' ? 'Cantidad que se asigna' : 'Valor de θ'}
+                    />
+                    <button className="primario" disabled={ej.texto.trim() === ''}>
+                      Comprobar
+                    </button>
+                  </form>
+                )}
+                {fase === 'tachar' && (
+                  <div className="respuesta">
+                    <button onClick={() => alTachar('fila')}>Fila {origenMeta}</button>
+                    <button onClick={() => alTachar('columna')}>Columna {destinoMeta}</button>
+                    <button onClick={() => alTachar('ambas')}>Las dos</button>
+                  </div>
+                )}
+                {textosPista.slice(0, ej.pistas).map((t, k) => (
+                  <p key={k} className="pista">
+                    <strong>Pista {k + 1}.</strong> {t}
+                  </p>
+                ))}
+                {ej.pistas < MAX_PISTAS && (
+                  <button onClick={() => setEjercicio({ ...ej, pistas: ej.pistas + 1 })}>
+                    Pedir pista ({ej.pistas + 1} de {MAX_PISTAS})
+                  </button>
+                )}
+              </div>
+            )}
+            {practica && puntaje.resueltas > 0 && (
+              <p className="puntaje">
+                Resueltas sin ayuda: {puntaje.sinAyuda} de {puntaje.resueltas}
+              </p>
+            )}
+            <div className="costo-grande">
+              {problema.utilidades ? 'Utilidad actual' : 'Costo actual'} <TotalAnimado problema={problema} x={paso.x} />
+            </div>
+          </aside>
         </div>
 
-        <div className="linea-tiempo">
-          <div className="segmentos" style={{ gap: pasos.length > 40 ? 1 : 3 }}>
-            {pasos.map((p, k) => (
-              <button
-                key={k}
-                className={`segmento ${faseDe(k).tipo} ${k < idx ? 'hecho' : k === idx ? 'actual' : ''}`}
-                onClick={() => ir(k)}
-                aria-label={`Ir al paso ${k + 1}: ${p.titulo}`}
-                title={`${k + 1}. ${p.titulo}`}
-              />
-            ))}
+        <section className="tarjeta controles" aria-label="Controles de reproducción">
+          <div className="controles-botones">
+            <button className="boton-icono" onClick={() => ir(0)} disabled={idx === 0} aria-label="Primer paso">
+              <Icono d="M17 6l-6 6 6 6M7 6v12" />
+            </button>
+            <button className="boton-icono" onClick={() => ir(idx - 1)} disabled={idx === 0} aria-label="Paso anterior">
+              <Icono d="M15 6l-6 6 6 6" />
+            </button>
+            {pregunta ? (
+              <button className="primario" onClick={mostrarRespuesta}>
+                Mostrar respuesta
+              </button>
+            ) : (
+              <button className="primario" onClick={() => ir(idx + 1)} disabled={idx === ultimo}>
+                Siguiente
+                <Icono d="M9 6l6 6-6 6" />
+              </button>
+            )}
+            <button
+              className="boton-icono"
+              onClick={() => ir(ultimo)}
+              disabled={idx === ultimo}
+              aria-label="Último paso"
+            >
+              <Icono d="M7 6l6 6-6 6M17 6v12" />
+            </button>
+            <button onClick={() => setReproduciendo(!avanzando)} disabled={idx === ultimo}>
+              {avanzando ? (
+                <Icono d="M8 5v14M16 5v14" />
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M7 4l13 8-13 8z" />
+                </svg>
+              )}
+              {avanzando ? 'Pausar' : 'Reproducir'}
+            </button>
+            <select value={ms} onChange={(e) => setMs(Number(e.target.value))} aria-label="Velocidad">
+              {VELOCIDADES.map((v) => (
+                <option key={v.ms} value={v.ms}>
+                  {v.etiqueta}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="fases-etiquetas">
-            {fases.map((f) => (
-              <span key={f.desde}>{f.etiqueta}</span>
-            ))}
+
+          <div className="linea-tiempo">
+            <div className="segmentos" style={{ gap: pasos.length > 40 ? 1 : 3 }}>
+              {pasos.map((p, k) => (
+                <button
+                  key={k}
+                  className={`segmento ${faseDe(k).tipo} ${k < idx ? 'hecho' : k === idx ? 'actual' : ''}`}
+                  onClick={() => ir(k)}
+                  aria-label={`Ir al paso ${k + 1}: ${p.titulo}`}
+                  title={`${k + 1}. ${p.titulo}`}
+                />
+              ))}
+            </div>
+            <div className="fases-etiquetas">
+              {fases.map((f) => (
+                <span key={f.desde}>{f.etiqueta}</span>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {preguntasReflexion && (
         <section className="tarjeta reflexion" aria-label="Preguntas para pensar">

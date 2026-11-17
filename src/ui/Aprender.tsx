@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { NOMBRE_OPTIMIZADOR, optimizar } from '../core/caminoPiedras';
 import type { Optimizador } from '../core/caminoPiedras';
 import { NOMBRE_METODO, resolverMetodo } from '../core/metodos';
@@ -6,6 +6,7 @@ import type { MetodoInicial } from '../core/metodos';
 import type { Problema } from '../core/tipos';
 import { TEORIA } from '../contenido/teoria';
 import type { Teoria } from '../contenido/teoria';
+import { BarraPresentacion, BotonPresentacion, usePresentacion } from './Presentacion';
 import { Reproductor } from './Reproductor';
 import type { Fase } from './Reproductor';
 
@@ -29,28 +30,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   const [completa, setCompleta] = useState(true);
   const [red, setRed] = useState(false);
   const [calor, setCalor] = useState(false);
-  const [presentacion, setPresentacion] = useState(false);
-
-  // En modo presentación se intenta ocupar toda la pantalla; Esc (o salir de pantalla completa) lo cierra.
-  useEffect(() => {
-    if (!presentacion) return;
-    document.documentElement.requestFullscreen?.().catch(() => {
-      // sin pantalla completa el modo funciona igual, dentro de la ventana
-    });
-    const tecla = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPresentacion(false);
-    };
-    const alCambiar = () => {
-      if (!document.fullscreenElement) setPresentacion(false);
-    };
-    window.addEventListener('keydown', tecla);
-    document.addEventListener('fullscreenchange', alCambiar);
-    return () => {
-      window.removeEventListener('keydown', tecla);
-      document.removeEventListener('fullscreenchange', alCambiar);
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => undefined);
-    };
-  }, [presentacion]);
+  const [presentacion, setPresentacion] = usePresentacion();
 
   const { balanceado, pasos, fases } = useMemo(() => {
     const inicial = resolverMetodo(problema, metodo);
@@ -70,14 +50,11 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
   return (
     <section className={presentacion ? 'vista presentacion' : 'vista'}>
       {presentacion && (
-        <div className="presentacion-barra">
-          <strong>
-            {NOMBRE_METODO[metodo]}
-            {optimizarOn ? ` · ${NOMBRE_OPTIMIZADOR[optimizador]}` : ''}
-          </strong>
-          <span className="ayuda">Flechas ← → para avanzar</span>
-          <button onClick={() => setPresentacion(false)}>Salir (Esc)</button>
-        </div>
+        <BarraPresentacion
+          titulo={NOMBRE_METODO[metodo] + (optimizarOn ? ` · ${NOMBRE_OPTIMIZADOR[optimizador]}` : '')}
+          ayuda="Flechas ← → para avanzar"
+          onSalir={() => setPresentacion(false)}
+        />
       )}
       <header className="vista-cabecera">
         <div>
@@ -160,13 +137,7 @@ export function Aprender({ problema, metodo, optimizador, onMetodo, onOptimizado
           <input type="checkbox" checked={calor} onChange={(e) => setCalor(e.target.checked)} />
           Mapa de costos
         </label>
-        <button
-          className="chip-boton"
-          title="Tabla y explicación a pantalla completa, con letra grande, para proyectar"
-          onClick={() => setPresentacion(true)}
-        >
-          Modo presentación
-        </button>
+        <BotonPresentacion onAbrir={() => setPresentacion(true)} />
       </div>
 
       <div className="teorias">

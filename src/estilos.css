@@ -4389,3 +4389,42 @@ h3 {
     zoom: 1;
   }
 }
+
+/* ───────── Presentación en Laboratorio y en «Tu reparto» ───────── */
+.presentacion .presentable {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: auto;
+  padding: 5rem clamp(16px, 3vw, 48px) 1.25rem;
+  background: var(--fondo);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.presentacion .presentable .tabla-contenedor:has(.tabla-transporte) {
+  zoom: 1.15;
+}
+
+@media (min-width: 1500px) {
+  .presentacion .presentable .tabla-contenedor:has(.tabla-transporte) {
+    zoom: 1.35;
+  }
+}
+
+@media (min-width: 1900px) {
+  .presentacion .presentable .tabla-contenedor:has(.tabla-transporte) {
+    zoom: 1.6;
+  }
+}
+
+/* Dentro del laboratorio las tarjetas del reproductor no tienen borde; a pantalla completa lo recuperan. */
+.presentacion .etapa .reproductor .tarjeta {
+  background: var(--superficie);
+  border-color: var(--linea);
+}
+
+.etapa > .chips {
+  margin-top: 0.25rem;
+}

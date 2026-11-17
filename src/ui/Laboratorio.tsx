@@ -38,6 +38,7 @@ import { NOMBRE_METODO, SELECTOR, resolverInicial } from '../core/metodos';
 import type { MetodoInicial } from '../core/metodos';
 import type { Problema } from '../core/tipos';
 import { fmt } from '../core/util';
+import { BarraPresentacion, BotonPresentacion, usePresentacion } from './Presentacion';
 import { Reproductor } from './Reproductor';
 import type { Fase } from './Reproductor';
 import { ResultadosExperimento } from './ResultadosExperimento';
@@ -187,6 +188,8 @@ const ETIQUETA_TAMANO_LAB: Record<Tamano | 'variado', string> = {
 export function Laboratorio({ problema }: { problema: Problema }) {
   const [config, setConfig] = useState<ConfigHeuristica>(cargarConfig);
   const [optimizarOn, setOptimizarOn] = useState(false);
+  const [calor, setCalor] = useState(false);
+  const [presentacion, setPresentacion] = usePresentacion();
   /** Problema del peor caso abierto desde los resultados; reemplaza al problema actual en la etapa 3. */
   const [peorCaso, setPeorCaso] = useState<Problema | null>(null);
   const [instancias, setInstancias] = useState(200);
@@ -305,7 +308,14 @@ export function Laboratorio({ problema }: { problema: Problema }) {
   const etapaAlcanzada = bitacora.length > 0 ? 5 : resultado ? 4 : equivale ? 0 : 2;
 
   return (
-    <section className="vista">
+    <section className={presentacion ? 'vista presentacion' : 'vista'}>
+      {presentacion && (
+        <BarraPresentacion
+          titulo={nombre + (optimizarOn ? ' · Camino de las Piedras' : '')}
+          ayuda="Flechas ← → para avanzar"
+          onSalir={() => setPresentacion(false)}
+        />
+      )}
       <header className="vista-cabecera">
         <div>
           <p className="eyebrow">04 — Laboratorio</p>
@@ -490,15 +500,23 @@ export function Laboratorio({ problema }: { problema: Problema }) {
             <button onClick={() => setPeorCaso(null)}>Volver al problema actual</button>
           </div>
         )}
-        <label className="chip-check">
-          <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
-          Continuar con Camino de las Piedras
-        </label>
+        <div className="chips">
+          <label className="chip-check">
+            <input type="checkbox" checked={optimizarOn} onChange={(e) => setOptimizarOn(e.target.checked)} />
+            Continuar con Camino de las Piedras
+          </label>
+          <label className="chip-check" title="Tiñe cada celda según su costo: más intenso cuanto más cara es la ruta">
+            <input type="checkbox" checked={calor} onChange={(e) => setCalor(e.target.checked)} />
+            Mapa de costos
+          </label>
+          <BotonPresentacion onAbrir={() => setPresentacion(true)} />
+        </div>
         <Reproductor
           key={`${JSON.stringify(config)}-${optimizarOn}-${JSON.stringify(problemaPrueba)}`}
           problema={balanceado}
           pasos={pasos}
           fases={fases}
+          calor={calor}
         />
       </article>
 

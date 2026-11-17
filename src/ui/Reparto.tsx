@@ -7,6 +7,7 @@ import { evaluarReparto, juzgarReparto } from '../core/reparto';
 import type { Veredicto } from '../core/reparto';
 import type { Celda, Paso, Problema } from '../core/tipos';
 import { EPS, fmt, matriz, total } from '../core/util';
+import { BarraPresentacion, BotonPresentacion, usePresentacion } from './Presentacion';
 import { TablaTransporte } from './TablaTransporte';
 
 const METODOS: MetodoInicial[] = ['noroeste', 'costoMinimo', 'vogel'];
@@ -33,6 +34,8 @@ export function Reparto({ problema, onMetodo }: Props) {
   const n = p.demandas.length;
   const [textos, setTextos] = useState(() => matriz(m, n, ''));
   const [juzgado, setJuzgado] = useState(false);
+  const [calor, setCalor] = useState(false);
+  const [presentacion, setPresentacion] = usePresentacion();
 
   const cantidades = textos.map((fila) => fila.map(leerCantidad));
   const x = cantidades.map((fila) => fila.map((v) => v ?? 0));
@@ -70,7 +73,8 @@ export function Reparto({ problema, onMetodo }: Props) {
   );
 
   return (
-    <section className="vista">
+    <section className={presentacion ? 'vista presentacion' : 'vista'}>
+      {presentacion && <BarraPresentacion titulo="Reparte a tu manera" onSalir={() => setPresentacion(false)} />}
       <header className="vista-cabecera">
         <div>
           <p className="eyebrow">02 — Aprender · Reto inicial</p>
@@ -101,54 +105,74 @@ export function Reparto({ problema, onMetodo }: Props) {
         </p>
       )}
 
-      <article className="tarjeta">
-        <TablaTransporte
-          problema={p}
-          paso={paso}
-          cantidadEditable={{
-            texto: (c) => textos[c.i][c.j],
-            invalida: (c) => cantidades[c.i][c.j] === null,
-            onCambio: alCambiar,
-          }}
-        />
-        <div className="reparto-resumen">
-          <dl className="cifras">
-            <div>
-              <dt>{palabra} de tu reparto</dt>
-              <dd>{fmt(paso.costoTotal)}</dd>
-            </div>
-            <div>
-              <dt>Falta repartir</dt>
-              <dd>{fmt(estado.falta)}</dd>
-            </div>
-            <div>
-              <dt>Rutas usadas</dt>
-              <dd>{estado.rutas}</dd>
-            </div>
-          </dl>
-          <div className="acciones">
-            <button className="secundario" onClick={limpiar} disabled={textos.flat().every((t) => t === '')}>
-              Borrar todo
-            </button>
-            <button className="primario" onClick={() => setJuzgado(true)} disabled={!listo || juzgado}>
-              Comparar con el óptimo
-            </button>
-          </div>
-        </div>
-        <p className="ayuda" role="status">
-          {hayInvalidas
-            ? 'Hay casillas que no son una cantidad válida: escribe números mayores o iguales que 0.'
-            : excesos.length > 0
-              ? `Te pasaste: ${excesos.join('; ')}.`
-              : listo
-                ? juzgado
-                  ? 'Si cambias alguna cantidad puedes volver a comparar.'
-                  : 'Reparto completo: toda la oferta sale y toda la demanda queda cubierta.'
-                : `Los números junto a OFERTA y DEMANDA muestran lo que queda. Faltan ${fmt(estado.falta)} unidades por repartir.`}
-        </p>
-      </article>
+      <div className="chips">
+        <label className="chip-check" title="Tiñe cada celda según su costo: más intenso cuanto más cara es la ruta">
+          <input type="checkbox" checked={calor} onChange={(e) => setCalor(e.target.checked)} />
+          Mapa de costos
+        </label>
+        <BotonPresentacion onAbrir={() => setPresentacion(true)} />
+      </div>
 
-      {veredicto && <Resultado veredicto={veredicto} x={x} onMetodo={onMetodo} />}
+      {/* En modo presentación este bloque ocupa toda la pantalla: la tabla y, debajo, el veredicto. */}
+      <div className="presentable">
+        <article className="tarjeta">
+          <TablaTransporte
+            problema={p}
+            paso={paso}
+            calor={calor}
+            cantidadEditable={{
+              texto: (c) => textos[c.i][c.j],
+              invalida: (c) => cantidades[c.i][c.j] === null,
+              onCambio: alCambiar,
+            }}
+          />
+          {calor && (
+            <div className="leyenda">
+              <span>
+                <span className="muestra calor" />
+                Mapa de costos: de la ruta más barata a la más cara
+              </span>
+            </div>
+          )}
+          <div className="reparto-resumen">
+            <dl className="cifras">
+              <div>
+                <dt>{palabra} de tu reparto</dt>
+                <dd>{fmt(paso.costoTotal)}</dd>
+              </div>
+              <div>
+                <dt>Falta repartir</dt>
+                <dd>{fmt(estado.falta)}</dd>
+              </div>
+              <div>
+                <dt>Rutas usadas</dt>
+                <dd>{estado.rutas}</dd>
+              </div>
+            </dl>
+            <div className="acciones">
+              <button className="secundario" onClick={limpiar} disabled={textos.flat().every((t) => t === '')}>
+                Borrar todo
+              </button>
+              <button className="primario" onClick={() => setJuzgado(true)} disabled={!listo || juzgado}>
+                Comparar con el óptimo
+              </button>
+            </div>
+          </div>
+          <p className="ayuda" role="status">
+            {hayInvalidas
+              ? 'Hay casillas que no son una cantidad válida: escribe números mayores o iguales que 0.'
+              : excesos.length > 0
+                ? `Te pasaste: ${excesos.join('; ')}.`
+                : listo
+                  ? juzgado
+                    ? 'Si cambias alguna cantidad puedes volver a comparar.'
+                    : 'Reparto completo: toda la oferta sale y toda la demanda queda cubierta.'
+                  : `Los números junto a OFERTA y DEMANDA muestran lo que queda. Faltan ${fmt(estado.falta)} unidades por repartir.`}
+          </p>
+        </article>
+
+        {veredicto && <Resultado veredicto={veredicto} x={x} onMetodo={onMetodo} />}
+      </div>
     </section>
   );
 }
